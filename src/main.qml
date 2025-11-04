@@ -61,58 +61,34 @@ ApplicationWindow {
 
     Column {
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 80
-        spacing: 16
+        anchors.top: parent.top
+        anchors.topMargin: 20
+        width: window.width * 0.8
 
         Text {
-            id: fireText
-            text: qsTr("Fire")
-            font.pixelSize: 48
+            id: introNarration
+            textFormat: Text.RichText
+            text: qsTr("The world was once bound by the elemental runes \u2014 <span style=\"color:#ff5722\">Fire</span>,<br/><span style=\"color:#03a9f4\">Water</span>, <span style=\"color:#c5e1f5\">Air</span>, and <span style=\"color:#795548\">Earth</span> \u2014 that kept the balance of magic alive")
+            font.pixelSize: 32
             font.family: signatureFont.name
-            color: "#ff5722"
+            color: "#f5f5f5"
+            width: parent.width
+            wrapMode: Text.Wrap
+            maximumLineCount: 5
+            horizontalAlignment: Text.AlignHCenter
             opacity: 0.0
-            Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.InOutQuad } }
-        }
-
-        Text {
-            id: waterText
-            text: qsTr("Water")
-            font.pixelSize: 48
-            font.family: signatureFont.name
-            color: "#03a9f4"
-            opacity: 0.0
-            Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.InOutQuad } }
-        }
-
-        Text {
-            id: airText
-            text: qsTr("Air")
-            font.pixelSize: 48
-            font.family: signatureFont.name
-            color: "#c5e1f5"
-            opacity: 0.0
-            Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.InOutQuad } }
-        }
-
-        Text {
-            id: earthText
-            text: qsTr("Earth")
-            font.pixelSize: 48
-            font.family: signatureFont.name
-            color: "#795548"
-            opacity: 0.0
-            Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.InOutQuad } }
+            Behavior on opacity { NumberAnimation { duration: 600; easing.type: Easing.InOutQuad } }
         }
     }
 
     MediaPlayer {
         id: introTrack
-        source: "../assets/sounds/1.mp3"
-        autoPlay: false
+        source: "../assets/music/soundtrack.mp3"
+        autoPlay: true
+        loops: MediaPlayer.Infinite
         audioOutput: AudioOutput {
             id: introOutput
-            volume: 0.95
+            volume: 0.3
             muted: false
         }
 
@@ -129,10 +105,23 @@ ApplicationWindow {
         }
     }
 
-    Timer { id: fireTimer; interval: 3000; repeat: false; onTriggered: fireText.opacity = 1.0 }
-    Timer { id: waterTimer; interval: 4000; repeat: false; onTriggered: waterText.opacity = 1.0 }
-    Timer { id: airTimer; interval: 5000; repeat: false; onTriggered: airText.opacity = 1.0 }
-    Timer { id: earthTimer; interval: 6000; repeat: false; onTriggered: earthText.opacity = 1.0 }
+    MediaPlayer {
+        id: introCue
+        source: "../assets/sounds/1.mp3"
+        autoPlay: false
+        audioOutput: AudioOutput {
+            volume: 0.8
+            muted: false
+        }
+
+        onErrorOccurred: function(error, errorString) {
+            console.error("IntroCue error:", errorString)
+        }
+
+        onPlaybackStateChanged: function(state) {
+            console.log("IntroCue state:", state, "position:", position)
+        }
+    }
 
     function startIntro() {
         if (introStarted) return
@@ -142,16 +131,18 @@ ApplicationWindow {
         logoImage.opacity = 0.0
         backgroundImage.opacity = 1.0
 
-        introTrack.stop()
-        introTrack.play()
+        if (introTrack.playbackState !== MediaPlayer.PlayingState)
+            introTrack.play()
 
-        fireTimer.restart()
-        waterTimer.restart()
-        airTimer.restart()
-        earthTimer.restart()
+        introCue.stop()
+        introCue.play()
+
+        introNarration.opacity = 1.0
     }
 
     Component.onCompleted: {
         console.log("ApplicationWindow ready. Click logo to start intro.")
+        if (introTrack.playbackState !== MediaPlayer.PlayingState)
+            introTrack.play()
     }
 }
