@@ -1,0 +1,17 @@
+# Build artifacts
+build/
+CMakeCache.txt
+CMakeFiles/
+
+# Compiler outputs
+*.o
+*.obj
+*.a
+*.so
+*.dll
+*.dylib
+*.rsp
+
+# Qt generated caches
+.rcc/
+.qt/
