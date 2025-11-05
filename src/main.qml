@@ -11,7 +11,13 @@ ApplicationWindow {
     title: qsTr("Runebound Magic")
 
     property bool introStarted: false
-    property bool secondSceneStarted: false
+    property int sceneIndex: 1
+    property bool wizardSceneStarted: false
+    property bool wizardSceneReady: false
+    property bool introCueFinished: false
+    property bool guardianSceneStarted: false
+    property bool guardianSceneReady: false
+    property bool wizardCueFinished: false
 
     FontLoader {
         id: signatureFont
@@ -39,6 +45,54 @@ ApplicationWindow {
         }
     }
 
+    Rectangle {
+        id: sceneTint
+        anchors.fill: parent
+        color: sceneIndex === 2 ? "#0f2d1c" :
+               sceneIndex === 3 ? "#f3e5c0" : "#000000"
+        opacity: sceneIndex === 1 ? 0.0 :
+                 sceneIndex === 2 ? 0.45 : 0.3
+        Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.InOutQuad } }
+    }
+
+    Image {
+        id: wizardImage
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+        source: "../assets/images/heroes/black_wizard.png"
+        fillMode: Image.PreserveAspectFit
+        width: Math.min(parent.width * 0.32, parent.height * 0.55)
+        smooth: true
+        opacity: 0.0
+        visible: opacity > 0.0
+        Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.InOutQuad } }
+    }
+
+    Rectangle {
+        id: guardianGlow
+        anchors.centerIn: parent
+        width: guardianImage.width * 1.4
+        height: width
+        radius: width / 2
+        color: "#fff1c5"
+        opacity: 0.0
+        visible: opacity > 0.0
+        Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.InOutQuad } }
+    }
+
+    Image {
+        id: guardianImage
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+        source: "../assets/images/heroes/peiestsess.png"
+        fillMode: Image.PreserveAspectFit
+        width: Math.min(parent.width * 0.3, parent.height * 0.5)
+        smooth: true
+        opacity: 0.0
+        visible: opacity > 0.0
+        Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.InOutQuad } }
+    }
+
     Image {
         id: logoImage
         anchors.centerIn: parent
@@ -61,12 +115,12 @@ ApplicationWindow {
     }
 
     Column {
-        anchors.top: parent.top
-        anchors.topMargin: 20
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.leftMargin: 40
-        anchors.rightMargin: 40
+        id: introColumn
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+        width: window.width * 0.75
+        spacing: 24
+        visible: sceneIndex === 1
 
         Text {
             id: introNarration
@@ -77,9 +131,98 @@ ApplicationWindow {
             color: "#f5f5f5"
             maximumLineCount: 5       
             horizontalAlignment: Text.AlignCenter
+            width: parent.width
             opacity: 0.0
             Behavior on opacity { NumberAnimation { duration: 600; easing.type: Easing.InOutQuad } }
         }
+
+        Row {
+            id: gemRow
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: 24
+            visible: introStarted && sceneIndex === 1
+
+            Image {
+                id: redGem
+                source: "../assets/images/tiles/red_gem.png"
+                width: 90
+                height: 90
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                opacity: 0.0
+                Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.InOutQuad } }
+            }
+
+            Image {
+                id: blueGem
+                source: "../assets/images/tiles/blue_gem.png"
+                width: 90
+                height: 90
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                opacity: 0.0
+                Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.InOutQuad } }
+            }
+
+            Image {
+                id: turquoiseGem
+                source: "../assets/images/tiles/turquoise_gem.png"
+                width: 90
+                height: 90
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                opacity: 0.0
+                Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.InOutQuad } }
+            }
+
+            Image {
+                id: greenGem
+                source: "../assets/images/tiles/green_gem.png"
+                width: 90
+                height: 90
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                opacity: 0.0
+                Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.InOutQuad } }
+            }
+        }
+
+    }
+
+    Text {
+        id: wizardNarration
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: sceneIndex === 2 ? 60 : 160
+        width: window.width * 0.7
+        text: qsTr("\u201cBut balance is a chain meant to be broken\u2026 and I, the Black Wizard, will forge a new world from the ashes!\u201d")
+        textFormat: Text.RichText
+        font.pixelSize: 30
+        font.family: signatureFont.name
+        color: "#d7ffd6"
+        horizontalAlignment: Text.AlignCenter
+        wrapMode: Text.Wrap
+        opacity: 0.0
+        visible: (sceneIndex === 2 || sceneIndex === 3) || opacity > 0.0
+        Behavior on opacity { NumberAnimation { duration: 600; easing.type: Easing.InOutQuad } }
+    }
+
+    Text {
+        id: guardianNarration
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 60
+        width: window.width * 0.7
+        text: qsTr("Yet hope remains. A lone guardian rises, chosen by the runes themselves, to stand against the growing darkness.")
+        textFormat: Text.RichText
+        font.pixelSize: 30
+        font.family: signatureFont.name
+        color: "#ffe8c2"
+        horizontalAlignment: Text.AlignCenter
+        wrapMode: Text.Wrap
+        opacity: 0.0
+        visible: sceneIndex === 3 || opacity > 0.0
+        Behavior on opacity { NumberAnimation { duration: 600; easing.type: Easing.InOutQuad } }
     }
 
     MediaPlayer {
@@ -124,43 +267,117 @@ ApplicationWindow {
         }
 
         onMediaStatusChanged: function(status) {
+            console.log("IntroCue status:", status)
             if (status === MediaPlayer.EndOfMedia) {
-                console.log("IntroCue finished, scheduling second scene")
-                if (!secondSceneStarted && !sceneTransitionDelay.running)
-                    sceneTransitionDelay.start()
+                introCueFinished = true
+                maybeStartWizardScene()
             }
         }
     }
 
-    Timer {
-        id: sceneTransitionDelay
-        interval: 2000
-        repeat: false
-        onTriggered: startSecondScene()
-    }
-
     MediaPlayer {
-        id: secondSceneCue
+        id: wizardCue
         source: "../assets/sounds/2.mp3"
         autoPlay: false
         audioOutput: AudioOutput {
-            volume: 0.8
+            volume: 0.85
             muted: false
         }
 
         onErrorOccurred: function(error, errorString) {
-            console.error("SecondSceneCue error:", errorString)
+            console.error("WizardCue error:", errorString)
         }
 
         onPlaybackStateChanged: function(state) {
-            console.log("SecondSceneCue state:", state, "position:", position)
+            console.log("WizardCue state:", state, "position:", position)
+        }
+
+        onMediaStatusChanged: function(status) {
+            console.log("WizardCue status:", status)
+            if (status === MediaPlayer.EndOfMedia) {
+                wizardCueFinished = true
+                maybeStartGuardianScene()
+            }
+        }
+    }
+
+    MediaPlayer {
+        id: guardianCue
+        source: "../assets/sounds/3.mp3"
+        autoPlay: false
+        audioOutput: AudioOutput {
+            volume: 0.85
+            muted: false
+        }
+
+        onErrorOccurred: function(error, errorString) {
+            console.error("GuardianCue error:", errorString)
+        }
+
+        onPlaybackStateChanged: function(state) {
+            console.log("GuardianCue state:", state, "position:", position)
+        }
+    }
+
+    Timer {
+        id: redGemTimer
+        interval: 3000
+        repeat: false
+        onTriggered: redGem.opacity = 1.0
+    }
+
+    Timer {
+        id: blueGemTimer
+        interval: 4000
+        repeat: false
+        onTriggered: blueGem.opacity = 1.0
+    }
+
+    Timer {
+        id: greenGemTimer
+        interval: 6000
+        repeat: false
+        onTriggered: {
+            greenGem.opacity = 1.0
+            if (!sceneTransitionTimer.running && !wizardSceneStarted)
+                sceneTransitionTimer.start()
+        }
+    }
+
+    Timer {
+        id: turquoiseGemTimer
+        interval: 5000
+        repeat: false
+        onTriggered: turquoiseGem.opacity = 1.0
+    }
+
+    Timer {
+        id: sceneTransitionTimer
+        interval: 1200
+        repeat: false
+        onTriggered: {
+            wizardSceneReady = true
+            maybeStartWizardScene()
+        }
+    }
+
+    Timer {
+        id: guardianTransitionTimer
+        interval: 1200
+        repeat: false
+        onTriggered: {
+            guardianSceneReady = true
+            maybeStartGuardianScene()
         }
     }
 
     function startIntro() {
         if (introStarted) return
         introStarted = true
-        secondSceneStarted = false
+        sceneIndex = 1
+        wizardSceneStarted = false
+        wizardSceneReady = false
+        introCueFinished = false
         console.log("Intro sequence started")
 
         logoImage.opacity = 0.0
@@ -169,26 +386,98 @@ ApplicationWindow {
         if (introTrack.playbackState !== MediaPlayer.PlayingState)
             introTrack.play()
 
-        sceneTransitionDelay.stop()
         introCue.stop()
         introCue.play()
-        secondSceneCue.stop()
+        wizardCue.stop()
+        guardianCue.stop()
 
         introNarration.opacity = 1.0
+        wizardNarration.opacity = 0.0
+        wizardImage.opacity = 0.0
+        guardianNarration.opacity = 0.0
+        guardianImage.opacity = 0.0
+        guardianGlow.opacity = 0.0
+        sceneTransitionTimer.stop()
+        guardianTransitionTimer.stop()
+        redGem.opacity = 0.0
+        blueGem.opacity = 0.0
+        greenGem.opacity = 0.0
+        turquoiseGem.opacity = 0.0
+
+        redGemTimer.stop()
+        blueGemTimer.stop()
+        greenGemTimer.stop()
+        turquoiseGemTimer.stop()
+
+        redGemTimer.start()
+        blueGemTimer.start()
+        greenGemTimer.start()
+        turquoiseGemTimer.start()
     }
 
-    function startSecondScene() {
-        if (secondSceneStarted)
+    function maybeStartWizardScene() {
+        if (wizardSceneStarted)
+            return
+        if (!wizardSceneReady || !introCueFinished)
             return
 
-        secondSceneStarted = true
-        console.log("Second scene starting with delayed cue")
+        showWizardScene()
+    }
+
+    function showWizardScene() {
+        if (wizardSceneStarted)
+            return
+
+        console.log("Switching to wizard scene")
+        wizardSceneStarted = true
+        sceneIndex = 2
+
+        introNarration.opacity = 0.0
+        redGem.opacity = 0.0
+        blueGem.opacity = 0.0
+        turquoiseGem.opacity = 0.0
+        greenGem.opacity = 0.0
+
+        wizardImage.opacity = 1.0
+        wizardNarration.opacity = 1.0
 
         if (introCue.playbackState === MediaPlayer.PlayingState)
             introCue.stop()
 
-        secondSceneCue.stop()
-        secondSceneCue.play()
+        wizardCue.stop()
+        wizardCue.play()
+        guardianTransitionTimer.stop()
+        guardianSceneReady = false
+        guardianSceneStarted = false
+        wizardCueFinished = false
+    }
+
+    function maybeStartGuardianScene() {
+        if (guardianSceneStarted)
+            return
+        if (!guardianSceneReady || !wizardCueFinished)
+            return
+
+        showGuardianScene()
+    }
+
+    function showGuardianScene() {
+        if (guardianSceneStarted)
+            return
+
+        console.log("Switching to guardian scene")
+        guardianSceneStarted = true
+        sceneIndex = 3
+
+        wizardNarration.opacity = 0.0
+        wizardImage.opacity = 0.0
+
+        guardianGlow.opacity = 0.25
+        guardianImage.opacity = 1.0
+        guardianNarration.opacity = 1.0
+
+        guardianCue.stop()
+        guardianCue.play()
     }
 
     Component.onCompleted: {
