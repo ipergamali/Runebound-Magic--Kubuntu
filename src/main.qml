@@ -11,6 +11,7 @@ ApplicationWindow {
     title: qsTr("Runebound Magic")
 
     property bool introStarted: false
+    property bool secondSceneStarted: false
 
     FontLoader {
         id: signatureFont
@@ -60,10 +61,12 @@ ApplicationWindow {
     }
 
     Column {
-        anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.topMargin: 20
-        width: window.width * 0.8
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: 40
+        anchors.rightMargin: 40
 
         Text {
             id: introNarration
@@ -72,10 +75,8 @@ ApplicationWindow {
             font.pixelSize: 32
             font.family: signatureFont.name
             color: "#f5f5f5"
-            width: parent.width
-            wrapMode: Text.Wrap
-            maximumLineCount: 5
-            horizontalAlignment: Text.AlignHCenter
+            maximumLineCount: 5       
+            horizontalAlignment: Text.AlignCenter
             opacity: 0.0
             Behavior on opacity { NumberAnimation { duration: 600; easing.type: Easing.InOutQuad } }
         }
@@ -121,11 +122,45 @@ ApplicationWindow {
         onPlaybackStateChanged: function(state) {
             console.log("IntroCue state:", state, "position:", position)
         }
+
+        onMediaStatusChanged: function(status) {
+            if (status === MediaPlayer.EndOfMedia) {
+                console.log("IntroCue finished, scheduling second scene")
+                if (!secondSceneStarted && !sceneTransitionDelay.running)
+                    sceneTransitionDelay.start()
+            }
+        }
+    }
+
+    Timer {
+        id: sceneTransitionDelay
+        interval: 2000
+        repeat: false
+        onTriggered: startSecondScene()
+    }
+
+    MediaPlayer {
+        id: secondSceneCue
+        source: "../assets/sounds/2.mp3"
+        autoPlay: false
+        audioOutput: AudioOutput {
+            volume: 0.8
+            muted: false
+        }
+
+        onErrorOccurred: function(error, errorString) {
+            console.error("SecondSceneCue error:", errorString)
+        }
+
+        onPlaybackStateChanged: function(state) {
+            console.log("SecondSceneCue state:", state, "position:", position)
+        }
     }
 
     function startIntro() {
         if (introStarted) return
         introStarted = true
+        secondSceneStarted = false
         console.log("Intro sequence started")
 
         logoImage.opacity = 0.0
@@ -134,10 +169,26 @@ ApplicationWindow {
         if (introTrack.playbackState !== MediaPlayer.PlayingState)
             introTrack.play()
 
+        sceneTransitionDelay.stop()
         introCue.stop()
         introCue.play()
+        secondSceneCue.stop()
 
         introNarration.opacity = 1.0
+    }
+
+    function startSecondScene() {
+        if (secondSceneStarted)
+            return
+
+        secondSceneStarted = true
+        console.log("Second scene starting with delayed cue")
+
+        if (introCue.playbackState === MediaPlayer.PlayingState)
+            introCue.stop()
+
+        secondSceneCue.stop()
+        secondSceneCue.play()
     }
 
     Component.onCompleted: {
