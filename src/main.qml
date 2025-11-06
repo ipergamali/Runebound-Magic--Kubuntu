@@ -18,6 +18,17 @@ ApplicationWindow {
     property bool guardianSceneStarted: false
     property bool guardianSceneReady: false
     property bool wizardCueFinished: false
+    property bool guardianCueFinished: false
+    property bool finaleSceneReady: false
+    property bool finaleSceneStarted: false
+
+    ListModel {
+        id: heroCardModel
+        ListElement { source: "../assets/images/heroes_cards/warrior.png" }
+        ListElement { source: "../assets/images/heroes_cards/ranger.png" }
+        ListElement { source: "../assets/images/heroes_cards/mystical_priestess.png" }
+        ListElement { source: "../assets/images/heroes_cards/mage.png" }
+    }
 
     FontLoader {
         id: signatureFont
@@ -49,9 +60,12 @@ ApplicationWindow {
         id: sceneTint
         anchors.fill: parent
         color: sceneIndex === 2 ? "#0f2d1c" :
-               sceneIndex === 3 ? "#f3e5c0" : "#000000"
+               sceneIndex === 3 ? "#f3e5c0" :
+               sceneIndex === 4 ? "#120a1e" : "#000000"
         opacity: sceneIndex === 1 ? 0.0 :
-                 sceneIndex === 2 ? 0.45 : 0.3
+                 sceneIndex === 2 ? 0.45 :
+                 sceneIndex === 3 ? 0.3 :
+                 sceneIndex === 4 ? 0.55 : 0.0
         Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.InOutQuad } }
     }
 
@@ -68,18 +82,6 @@ ApplicationWindow {
         Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.InOutQuad } }
     }
 
-    Rectangle {
-        id: guardianGlow
-        anchors.centerIn: parent
-        width: guardianImage.width * 1.4
-        height: width
-        radius: width / 2
-        color: "#fff1c5"
-        opacity: 0.0
-        visible: opacity > 0.0
-        Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.InOutQuad } }
-    }
-
     Image {
         id: guardianImage
         anchors.horizontalCenter: parent.horizontalCenter
@@ -91,6 +93,216 @@ ApplicationWindow {
         opacity: 0.0
         visible: opacity > 0.0
         Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.InOutQuad } }
+    }
+
+    Image {
+        id: finaleGuardian
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -70
+        anchors.left: parent.left
+        anchors.leftMargin: parent.width * 0.08
+        source: "../assets/images/heroes/peiestsess.png"
+        fillMode: Image.PreserveAspectFit
+        width: Math.min(parent.width * 0.28, parent.height * 0.5)
+        smooth: true
+        opacity: 0.0
+        visible: opacity > 0.0
+        z: 2
+        Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.InOutQuad } }
+    }
+
+    Image {
+        id: finaleWizard
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -70
+        anchors.right: parent.right
+        anchors.rightMargin: parent.width * 0.08
+        source: "../assets/images/heroes/black_wizard.png"
+        fillMode: Image.PreserveAspectFit
+        width: Math.min(parent.width * 0.28, parent.height * 0.5)
+        smooth: true
+        opacity: 0.0
+        visible: opacity > 0.0
+        z: 2
+        Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.InOutQuad } }
+    }
+
+    Row {
+        id: finaleGemRow
+        anchors.centerIn: parent
+        spacing: 30
+        opacity: 0.0
+        visible: opacity > 0.0
+        z: 3
+        Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.InOutQuad } }
+
+        Image {
+            id: finaleRedGem
+            source: "../assets/images/tiles/red_gem.png"
+            width: 96
+            height: 96
+            smooth: true
+            opacity: 0.0
+            Behavior on scale { NumberAnimation { duration: 800; easing.type: Easing.InOutQuad } }
+            SequentialAnimation {
+                id: finaleRedGlow
+                running: sceneIndex === 4
+                loops: Animation.Infinite
+                onRunningChanged: if (!running) finaleRedGem.scale = 1.0
+                NumberAnimation {
+                    target: finaleRedGem
+                    property: "scale"
+                    from: 1.0; to: 1.12
+                    duration: 900
+                    easing.type: Easing.InOutQuad
+                }
+                NumberAnimation {
+                    target: finaleRedGem
+                    property: "scale"
+                    from: 1.12; to: 1.0
+                    duration: 900
+                    easing.type: Easing.InOutQuad
+                }
+            }
+            SequentialAnimation {
+                id: finaleRedFade
+                running: false
+                PauseAnimation { duration: 0 }
+                NumberAnimation {
+                    target: finaleRedGem
+                    property: "opacity"
+                    from: 0.0; to: 1.0
+                    duration: 400
+                    easing.type: Easing.InOutQuad
+                }
+            }
+        }
+
+        Image {
+            id: finaleBlueGem
+            source: "../assets/images/tiles/blue_gem.png"
+            width: 96
+            height: 96
+            smooth: true
+            opacity: 0.0
+            Behavior on scale { NumberAnimation { duration: 800; easing.type: Easing.InOutQuad } }
+            SequentialAnimation {
+                id: finaleBlueGlow
+                running: sceneIndex === 4
+                loops: Animation.Infinite
+                onRunningChanged: if (!running) finaleBlueGem.scale = 1.0
+                NumberAnimation {
+                    target: finaleBlueGem
+                    property: "scale"
+                    from: 1.0; to: 1.12
+                    duration: 1000
+                    easing.type: Easing.InOutQuad
+                }
+                NumberAnimation {
+                    target: finaleBlueGem
+                    property: "scale"
+                    from: 1.12; to: 1.0
+                    duration: 1000
+                    easing.type: Easing.InOutQuad
+                }
+            }
+            SequentialAnimation {
+                id: finaleBlueFade
+                running: false
+                PauseAnimation { duration: 1000 }
+                NumberAnimation {
+                    target: finaleBlueGem
+                    property: "opacity"
+                    from: 0.0; to: 1.0
+                    duration: 400
+                    easing.type: Easing.InOutQuad
+                }
+            }
+        }
+
+        Image {
+            id: finaleTurquoiseGem
+            source: "../assets/images/tiles/turquoise_gem.png"
+            width: 96
+            height: 96
+            smooth: true
+            opacity: 0.0
+            Behavior on scale { NumberAnimation { duration: 800; easing.type: Easing.InOutQuad } }
+            SequentialAnimation {
+                id: finaleTurquoiseGlow
+                running: sceneIndex === 4
+                loops: Animation.Infinite
+                onRunningChanged: if (!running) finaleTurquoiseGem.scale = 1.0
+                NumberAnimation {
+                    target: finaleTurquoiseGem
+                    property: "scale"
+                    from: 1.0; to: 1.12
+                    duration: 1100
+                    easing.type: Easing.InOutQuad
+                }
+                NumberAnimation {
+                    target: finaleTurquoiseGem
+                    property: "scale"
+                    from: 1.12; to: 1.0
+                    duration: 1100
+                    easing.type: Easing.InOutQuad
+                }
+            }
+            SequentialAnimation {
+                id: finaleTurquoiseFade
+                running: false
+                PauseAnimation { duration: 2000 }
+                NumberAnimation {
+                    target: finaleTurquoiseGem
+                    property: "opacity"
+                    from: 0.0; to: 1.0
+                    duration: 400
+                    easing.type: Easing.InOutQuad
+                }
+            }
+        }
+
+        Image {
+            id: finaleGreenGem
+            source: "../assets/images/tiles/green_gem.png"
+            width: 96
+            height: 96
+            smooth: true
+            opacity: 0.0
+            Behavior on scale { NumberAnimation { duration: 800; easing.type: Easing.InOutQuad } }
+            SequentialAnimation {
+                id: finaleGreenGlow
+                running: sceneIndex === 4
+                loops: Animation.Infinite
+                onRunningChanged: if (!running) finaleGreenGem.scale = 1.0
+                NumberAnimation {
+                    target: finaleGreenGem
+                    property: "scale"
+                    from: 1.0; to: 1.12
+                    duration: 1200
+                    easing.type: Easing.InOutQuad
+                }
+                NumberAnimation {
+                    target: finaleGreenGem
+                    property: "scale"
+                    from: 1.12; to: 1.0
+                    duration: 1200
+                    easing.type: Easing.InOutQuad
+                }
+            }
+            SequentialAnimation {
+                id: finaleGreenFade
+                running: false
+                PauseAnimation { duration: 3000 }
+                NumberAnimation {
+                    target: finaleGreenGem
+                    property: "opacity"
+                    from: 0.0; to: 1.0
+                    duration: 400
+                    easing.type: Easing.InOutQuad
+                }
+            }
+        }
     }
 
     Image {
@@ -193,7 +405,7 @@ ApplicationWindow {
         id: wizardNarration
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: sceneIndex === 2 ? 60 : 160
+        anchors.bottomMargin: 60
         width: window.width * 0.7
         text: qsTr("\u201cBut balance is a chain meant to be broken\u2026 and I, the Black Wizard, will forge a new world from the ashes!\u201d")
         textFormat: Text.RichText
@@ -203,7 +415,7 @@ ApplicationWindow {
         horizontalAlignment: Text.AlignCenter
         wrapMode: Text.Wrap
         opacity: 0.0
-        visible: (sceneIndex === 2 || sceneIndex === 3) || opacity > 0.0
+        visible: sceneIndex === 2 || opacity > 0.0
         Behavior on opacity { NumberAnimation { duration: 600; easing.type: Easing.InOutQuad } }
     }
 
@@ -223,6 +435,173 @@ ApplicationWindow {
         opacity: 0.0
         visible: sceneIndex === 3 || opacity > 0.0
         Behavior on opacity { NumberAnimation { duration: 600; easing.type: Easing.InOutQuad } }
+    }
+
+    Text {
+        id: finaleNarration
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 60
+        width: window.width * 0.75
+        text: qsTr("The battle of runes begins. Match their power, wield their magic, and decide the fate of the realm.")
+        textFormat: Text.RichText
+        font.pixelSize: 32
+        font.family: signatureFont.name
+        color: "#f8eaff"
+        horizontalAlignment: Text.AlignCenter
+        wrapMode: Text.Wrap
+        opacity: 0.0
+        visible: sceneIndex === 4 || opacity > 0.0
+        Behavior on opacity { NumberAnimation { duration: 600; easing.type: Easing.InOutQuad } }
+    }
+
+    Button {
+        id: lobbyButton
+        text: qsTr("Lobby")
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.rightMargin: 40
+        anchors.bottomMargin: 40
+        opacity: sceneIndex === 4 ? 1.0 : 0.0
+        visible: opacity > 0.0
+        enabled: sceneIndex === 4
+        focusPolicy: Qt.NoFocus
+        z: 4
+        background: Rectangle {
+            radius: 24
+            color: "#1f1f28"
+            border.color: "#9f8cff"
+            border.width: 2
+            implicitWidth: 140
+            implicitHeight: 48
+        }
+        contentItem: Text {
+            text: lobbyButton.text
+            font.pixelSize: 20
+            font.family: signatureFont.name
+            color: "#f8eaff"
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+        onClicked: openLobby()
+    }
+
+    Item {
+        id: lobbyLayer
+        anchors.fill: parent
+        visible: sceneIndex === 5
+        opacity: visible ? 1.0 : 0.0
+        enabled: visible
+        z: 3
+
+        Image {
+            id: lobbyBackdrop
+            anchors.centerIn: parent
+            width: parent.width * 0.85
+            height: parent.height * 0.85
+            source: "../assets/images/lobby/Game_Lobby.png"
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+        }
+
+        PathView {
+            id: heroCarousel
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width * 0.6
+            height: parent.height * 0.4
+            z: 1
+            model: heroCardModel
+            preferredHighlightBegin: 0.5
+            preferredHighlightEnd: 0.5
+            highlightRangeMode: PathView.StrictlyEnforceRange
+            snapMode: PathView.SnapOneItem
+            pathItemCount: 5
+            dragMargin: 80
+            interactive: true
+            clip: false
+            path: Path {
+                startX: heroCarousel.width * 0.15
+                startY: heroCarousel.height * 0.55
+                PathLine { x: heroCarousel.width * 0.85; y: heroCarousel.height * 0.55 }
+            }
+            delegate: Item {
+                width: heroCarousel.width * 0.28
+                height: heroCarousel.height * 0.85
+                property string cardSource: model.source
+                transformOrigin: Item.Center
+                scale: PathView.isCurrentItem ? 1.0 : 0.75
+                opacity: PathView.isCurrentItem ? 1.0 : 0.55
+
+                Image {
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectFit
+                    source: cardSource
+                    smooth: true
+                    z: 2
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: heroCarousel.currentIndex = index
+                    cursorShape: Qt.PointingHandCursor
+                }
+            }
+        }
+
+        Button {
+            id: prevCardButton
+            text: "<"
+            anchors.verticalCenter: heroCarousel.verticalCenter
+            anchors.left: heroCarousel.left
+            anchors.leftMargin: -60
+            width: 48
+            height: 48
+            z: 2
+            focusPolicy: Qt.NoFocus
+            background: Rectangle {
+                radius: 24
+                color: "#1f1f28"
+                border.color: "#9f8cff"
+                border.width: 2
+            }
+            contentItem: Text {
+                text: prevCardButton.text
+                font.pixelSize: 22
+                font.family: signatureFont.name
+                color: "#f8eaff"
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+            onClicked: heroCarousel.decrementCurrentIndex()
+        }
+
+        Button {
+            id: nextCardButton
+            text: ">"
+            anchors.verticalCenter: heroCarousel.verticalCenter
+            anchors.right: heroCarousel.right
+            anchors.rightMargin: -60
+            width: 48
+            height: 48
+            z: 2
+            focusPolicy: Qt.NoFocus
+            background: Rectangle {
+                radius: 24
+                color: "#1f1f28"
+                border.color: "#9f8cff"
+                border.width: 2
+            }
+            contentItem: Text {
+                text: nextCardButton.text
+                font.pixelSize: 22
+                font.family: signatureFont.name
+                color: "#f8eaff"
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+            onClicked: heroCarousel.incrementCurrentIndex()
+        }
     }
 
     MediaPlayer {
@@ -317,6 +696,32 @@ ApplicationWindow {
         onPlaybackStateChanged: function(state) {
             console.log("GuardianCue state:", state, "position:", position)
         }
+
+        onMediaStatusChanged: function(status) {
+            console.log("GuardianCue status:", status)
+            if (status === MediaPlayer.EndOfMedia) {
+                guardianCueFinished = true
+                maybeStartFinaleScene()
+            }
+        }
+    }
+
+    MediaPlayer {
+        id: finaleCue
+        source: "../assets/sounds/4.mp3"
+        autoPlay: false
+        audioOutput: AudioOutput {
+            volume: 0.85
+            muted: false
+        }
+
+        onErrorOccurred: function(error, errorString) {
+            console.error("FinaleCue error:", errorString)
+        }
+
+        onPlaybackStateChanged: function(state) {
+            console.log("FinaleCue state:", state, "position:", position)
+        }
     }
 
     Timer {
@@ -371,6 +776,16 @@ ApplicationWindow {
         }
     }
 
+    Timer {
+        id: finaleTransitionTimer
+        interval: 1500
+        repeat: false
+        onTriggered: {
+            finaleSceneReady = true
+            maybeStartFinaleScene()
+        }
+    }
+
     function startIntro() {
         if (introStarted) return
         introStarted = true
@@ -378,6 +793,12 @@ ApplicationWindow {
         wizardSceneStarted = false
         wizardSceneReady = false
         introCueFinished = false
+        guardianSceneStarted = false
+        guardianSceneReady = false
+        wizardCueFinished = false
+        guardianCueFinished = false
+        finaleSceneReady = false
+        finaleSceneStarted = false
         console.log("Intro sequence started")
 
         logoImage.opacity = 0.0
@@ -390,15 +811,25 @@ ApplicationWindow {
         introCue.play()
         wizardCue.stop()
         guardianCue.stop()
+        finaleCue.stop()
 
         introNarration.opacity = 1.0
         wizardNarration.opacity = 0.0
         wizardImage.opacity = 0.0
         guardianNarration.opacity = 0.0
         guardianImage.opacity = 0.0
-        guardianGlow.opacity = 0.0
+        finaleNarration.opacity = 0.0
+        finaleGemRow.opacity = 0.0
+        finaleGuardian.opacity = 0.0
+        finaleWizard.opacity = 0.0
+        finaleRedGem.opacity = 0.0
+        finaleBlueGem.opacity = 0.0
+        finaleTurquoiseGem.opacity = 0.0
+        finaleGreenGem.opacity = 0.0
+        lobbyButton.opacity = 0.0
         sceneTransitionTimer.stop()
         guardianTransitionTimer.stop()
+        finaleTransitionTimer.stop()
         redGem.opacity = 0.0
         blueGem.opacity = 0.0
         greenGem.opacity = 0.0
@@ -450,6 +881,20 @@ ApplicationWindow {
         guardianSceneReady = false
         guardianSceneStarted = false
         wizardCueFinished = false
+        guardianCueFinished = false
+        finaleSceneStarted = false
+        finaleSceneReady = false
+        finaleNarration.opacity = 0.0
+        finaleGemRow.opacity = 0.0
+        finaleGuardian.opacity = 0.0
+        finaleWizard.opacity = 0.0
+        finaleRedGem.opacity = 0.0
+        finaleBlueGem.opacity = 0.0
+        finaleTurquoiseGem.opacity = 0.0
+        finaleGreenGem.opacity = 0.0
+        lobbyButton.opacity = 0.0
+        finaleTransitionTimer.stop()
+        guardianTransitionTimer.start()
     }
 
     function maybeStartGuardianScene() {
@@ -472,12 +917,92 @@ ApplicationWindow {
         wizardNarration.opacity = 0.0
         wizardImage.opacity = 0.0
 
-        guardianGlow.opacity = 0.25
         guardianImage.opacity = 1.0
         guardianNarration.opacity = 1.0
 
         guardianCue.stop()
         guardianCue.play()
+        finaleCue.stop()
+        guardianTransitionTimer.stop()
+        guardianCueFinished = false
+        finaleSceneStarted = false
+        finaleSceneReady = false
+        finaleNarration.opacity = 0.0
+        finaleGemRow.opacity = 0.0
+        finaleGuardian.opacity = 0.0
+        finaleWizard.opacity = 0.0
+        finaleRedGem.opacity = 0.0
+        finaleBlueGem.opacity = 0.0
+        finaleTurquoiseGem.opacity = 0.0
+        finaleGreenGem.opacity = 0.0
+        lobbyButton.opacity = 0.0
+        finaleTransitionTimer.stop()
+        finaleTransitionTimer.start()
+    }
+
+    function maybeStartFinaleScene() {
+        if (finaleSceneStarted)
+            return
+        if (!finaleSceneReady || !guardianCueFinished)
+            return
+
+        showFinaleScene()
+    }
+
+    function showFinaleScene() {
+        if (finaleSceneStarted)
+            return
+
+        console.log("Switching to finale scene")
+        finaleSceneStarted = true
+        sceneIndex = 4
+
+        guardianNarration.opacity = 0.0
+        guardianImage.opacity = 0.0
+
+        guardianCue.stop()
+        finaleCue.stop()
+        finaleCue.play()
+        finaleGuardian.opacity = 1.0
+        finaleWizard.opacity = 1.0
+        finaleGemRow.opacity = 1.0
+        finaleNarration.opacity = 1.0
+        finaleRedGem.opacity = 0.0
+        finaleBlueGem.opacity = 0.0
+        finaleTurquoiseGem.opacity = 0.0
+        finaleGreenGem.opacity = 0.0
+        lobbyButton.opacity = 1.0
+
+        finaleRedFade.restart()
+        finaleBlueFade.restart()
+        finaleTurquoiseFade.restart()
+        finaleGreenFade.restart()
+
+        finaleTransitionTimer.stop()
+    }
+
+    function openLobby() {
+        if (sceneIndex !== 4)
+            return
+
+        finaleCue.stop()
+        finaleRedFade.running = false
+        finaleBlueFade.running = false
+        finaleTurquoiseFade.running = false
+        finaleGreenFade.running = false
+
+        finaleNarration.opacity = 0.0
+        finaleGemRow.opacity = 0.0
+        finaleGuardian.opacity = 0.0
+        finaleWizard.opacity = 0.0
+        finaleRedGem.opacity = 0.0
+        finaleBlueGem.opacity = 0.0
+        finaleTurquoiseGem.opacity = 0.0
+        finaleGreenGem.opacity = 0.0
+        lobbyButton.opacity = 0.0
+
+        sceneIndex = 5
+        heroCarousel.currentIndex = 0
     }
 
     Component.onCompleted: {
