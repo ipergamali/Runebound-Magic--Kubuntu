@@ -21,13 +21,39 @@ ApplicationWindow {
     property bool guardianCueFinished: false
     property bool finaleSceneReady: false
     property bool finaleSceneStarted: false
+    property int currentHeroIndex: 0
+    property int selectedHeroIndex: -1
+    property var selectedHeroData: null
+    property string currentHeroName: ""
+    property string currentHeroDescription: ""
+    property string selectedHeroName: ""
 
     ListModel {
         id: heroCardModel
-        ListElement { source: "../assets/images/heroes_cards/warrior.png" }
-        ListElement { source: "../assets/images/heroes_cards/ranger.png" }
-        ListElement { source: "../assets/images/heroes_cards/mystical_priestess.png" }
-        ListElement { source: "../assets/images/heroes_cards/mage.png" }
+        ListElement {
+            heroId: "mage"
+            name: qsTr("Mage")
+            description: qsTr("A master of elemental sorcery with unmatched area damage.")
+            cardSource: "../assets/images/heroes_cards/mage.png"
+        }
+        ListElement {
+            heroId: "warrior"
+            name: qsTr("Warrior")
+            description: qsTr("Heavy armor and relentless strength make the warrior unbreakable.")
+            cardSource: "../assets/images/heroes_cards/warrior.png"
+        }
+        ListElement {
+            heroId: "ranger"
+            name: qsTr("Ranger")
+            description: qsTr("Swift and precise, the ranger strikes from the shadows.")
+            cardSource: "../assets/images/heroes_cards/ranger.png"
+        }
+        ListElement {
+            heroId: "mystical_priestess"
+            name: qsTr("Mystical Priestess")
+            description: qsTr("Blessed by the runes, she heals allies and bends fate.")
+            cardSource: "../assets/images/heroes_cards/mystical_priestess.png"
+        }
     }
 
     FontLoader {
@@ -493,6 +519,7 @@ ApplicationWindow {
         opacity: visible ? 1.0 : 0.0
         enabled: visible
         z: 3
+        Component.onCompleted: updateHeroDetails()
 
         Image {
             id: lobbyBackdrop
@@ -525,13 +552,23 @@ ApplicationWindow {
                 startY: heroCarousel.height * 0.55
                 PathLine { x: heroCarousel.width * 0.85; y: heroCarousel.height * 0.55 }
             }
+            onCurrentIndexChanged: updateHeroDetails()
             delegate: Item {
                 width: heroCarousel.width * 0.28
                 height: heroCarousel.height * 0.85
-                property string cardSource: model.source
+                property string cardSource: model.cardSource
                 transformOrigin: Item.Center
                 scale: PathView.isCurrentItem ? 1.0 : 0.75
                 opacity: PathView.isCurrentItem ? 1.0 : 0.55
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 16
+                    color: "transparent"
+                    border.width: index === selectedHeroIndex ? 4 : (PathView.isCurrentItem ? 2 : 0)
+                    border.color: index === selectedHeroIndex ? "#ffd166" : "#7c4cff"
+                    z: 1
+                }
 
                 Image {
                     anchors.fill: parent
@@ -553,54 +590,109 @@ ApplicationWindow {
             id: prevCardButton
             text: "<"
             anchors.verticalCenter: heroCarousel.verticalCenter
-            anchors.left: heroCarousel.left
-            anchors.leftMargin: -60
-            width: 48
-            height: 48
+            anchors.left: lobbyBackdrop.left
+            anchors.leftMargin: 40
+            width: 64
+            height: 64
             z: 2
             focusPolicy: Qt.NoFocus
             background: Rectangle {
-                radius: 24
-                color: "#1f1f28"
-                border.color: "#9f8cff"
+                radius: 32
+                color: "#1f2d35"
+                border.color: "#7ed1c2"
                 border.width: 2
             }
             contentItem: Text {
                 text: prevCardButton.text
-                font.pixelSize: 22
+                font.pixelSize: 26
                 font.family: signatureFont.name
-                color: "#f8eaff"
+                color: "#b8f0e5"
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
             }
-            onClicked: heroCarousel.decrementCurrentIndex()
+            onClicked: previousHero()
         }
 
         Button {
             id: nextCardButton
             text: ">"
             anchors.verticalCenter: heroCarousel.verticalCenter
-            anchors.right: heroCarousel.right
-            anchors.rightMargin: -60
-            width: 48
-            height: 48
+            anchors.right: lobbyBackdrop.right
+            anchors.rightMargin: 40
+            width: 64
+            height: 64
             z: 2
             focusPolicy: Qt.NoFocus
             background: Rectangle {
-                radius: 24
-                color: "#1f1f28"
-                border.color: "#9f8cff"
+                radius: 32
+                color: "#1f2d35"
+                border.color: "#7ed1c2"
                 border.width: 2
             }
             contentItem: Text {
                 text: nextCardButton.text
-                font.pixelSize: 22
+                font.pixelSize: 26
                 font.family: signatureFont.name
-                color: "#f8eaff"
+                color: "#b8f0e5"
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
             }
-            onClicked: heroCarousel.incrementCurrentIndex()
+            onClicked: nextHero()
+        }
+
+        Row {
+            id: lobbyNavigationRow
+            anchors.horizontalCenter: lobbyBackdrop.horizontalCenter
+            anchors.bottom: lobbyBackdrop.bottom
+            anchors.bottomMargin: lobbyBackdrop.height * 0.05
+            spacing: 40
+            z: 2
+
+            Button {
+                id: lobbyBackButton
+                text: qsTr("Back")
+                width: 160
+                height: 52
+                focusPolicy: Qt.NoFocus
+                background: Rectangle {
+                    radius: 26
+                    color: "#1f2d35"
+                    border.color: "#7ed1c2"
+                    border.width: 2
+                }
+                contentItem: Text {
+                    text: lobbyBackButton.text
+                    font.pixelSize: 22
+                    font.family: signatureFont.name
+                    color: "#b8f0e5"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                onClicked: goBack()
+            }
+
+            Button {
+                id: lobbySelectButton
+                text: qsTr("Select Hero")
+                width: 200
+                height: 52
+                focusPolicy: Qt.NoFocus
+                background: Rectangle {
+                    radius: 26
+                    color: "#513860"
+                    border.color: "#d8b6ff"
+                    border.width: 2
+                }
+                contentItem: Text {
+                    text: lobbySelectButton.text
+                    font.pixelSize: 22
+                    font.family: signatureFont.name
+                    color: "#f8eaff"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                onClicked: selectHero()
+            }
         }
     }
 
@@ -949,6 +1041,62 @@ ApplicationWindow {
         showFinaleScene()
     }
 
+    function currentHeroData() {
+        if (!heroCarousel || heroCardModel.count === 0)
+            return null
+        return heroCardModel.get(heroCarousel.currentIndex % heroCardModel.count)
+    }
+
+    function updateHeroDetails() {
+        if (!heroCarousel)
+            return
+        if (heroCarousel.currentIndex < 0 && heroCardModel.count > 0) {
+            heroCarousel.currentIndex = 0
+            return
+        }
+        const hero = currentHeroData()
+        if (!hero)
+            return
+        currentHeroIndex = heroCarousel.currentIndex
+        currentHeroName = hero.name
+        currentHeroDescription = hero.description
+    }
+
+    function nextHero() {
+        if (heroCardModel.count === 0)
+            return
+        heroCarousel.currentIndex = (heroCarousel.currentIndex + 1) % heroCardModel.count
+    }
+
+    function previousHero() {
+        if (heroCardModel.count === 0)
+            return
+        heroCarousel.currentIndex = (heroCarousel.currentIndex - 1 + heroCardModel.count) % heroCardModel.count
+    }
+
+    function selectHero() {
+        const hero = currentHeroData()
+        if (!hero)
+            return
+        selectedHeroIndex = heroCarousel.currentIndex
+        selectedHeroData = hero
+        selectedHeroName = hero.name
+        console.log("✅ Selected hero:", hero.name)
+    }
+
+    function goBack() {
+        returnToFinale()
+    }
+
+    function startBattle() {
+        if (selectedHeroIndex < 0 || !selectedHeroData) {
+            console.log("⚠️ Please select a hero before starting the battle.")
+            return
+        }
+        console.log("🚀 Starting battle with:", selectedHeroData.name, "(", selectedHeroData.heroId, ")")
+        // TODO: load BattleScene.qml when available
+    }
+
     function showFinaleScene() {
         if (finaleSceneStarted)
             return
@@ -962,6 +1110,7 @@ ApplicationWindow {
 
         guardianCue.stop()
         finaleCue.stop()
+        finaleCue.position = 0
         finaleCue.play()
         finaleGuardian.opacity = 1.0
         finaleWizard.opacity = 1.0
@@ -1001,8 +1150,24 @@ ApplicationWindow {
         finaleGreenGem.opacity = 0.0
         lobbyButton.opacity = 0.0
 
+        finaleSceneStarted = false
         sceneIndex = 5
         heroCarousel.currentIndex = 0
+        currentHeroIndex = 0
+        selectedHeroIndex = -1
+        selectedHeroData = null
+        selectedHeroName = ""
+        updateHeroDetails()
+    }
+
+    function returnToFinale() {
+        if (sceneIndex !== 5)
+            return
+
+        finaleSceneStarted = false
+        finaleSceneReady = true
+        guardianCueFinished = true
+        showFinaleScene()
     }
 
     Component.onCompleted: {
