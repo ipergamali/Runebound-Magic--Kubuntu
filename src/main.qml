@@ -27,6 +27,7 @@ ApplicationWindow {
     property string currentHeroName: ""
     property string currentHeroDescription: ""
     property string selectedHeroName: ""
+    property string heroNameInput: ""
 
     ListModel {
         id: heroCardModel
@@ -535,6 +536,7 @@ ApplicationWindow {
             id: heroCarousel
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenterOffset: -parent.height * 0.08
             width: parent.width * 0.6
             height: parent.height * 0.4
             z: 1
@@ -638,6 +640,47 @@ ApplicationWindow {
                 verticalAlignment: Text.AlignVCenter
             }
             onClicked: nextHero()
+        }
+
+        Column {
+            id: heroNameEntry
+            anchors.horizontalCenter: lobbyBackdrop.horizontalCenter
+            anchors.bottom: lobbyNavigationRow.top
+            anchors.bottomMargin: lobbyBackdrop.height * 0.06
+            width: lobbyBackdrop.width * 0.5
+            spacing: 12
+            z: 2
+
+            Text {
+                text: qsTr("Hero Name")
+                font.pixelSize: 24
+                font.family: signatureFont.name
+                color: "#f8eaff"
+                horizontalAlignment: Text.AlignHCenter
+                width: parent.width
+            }
+
+            TextField {
+                id: heroNameField
+                width: parent.width
+                text: window.heroNameInput
+                onTextChanged: window.heroNameInput = text
+                placeholderText: qsTr("Type the name of your hero")
+                font.pixelSize: 20
+                font.family: signatureFont.name
+                color: "#f8eaff"
+                horizontalAlignment: Text.AlignHCenter
+                focusPolicy: Qt.StrongFocus
+                selectByMouse: true
+                cursorVisible: true
+                padding: 12
+                background: Rectangle {
+                    radius: 22
+                    color: "#1f2d35cc"
+                    border.color: "#7ed1c2"
+                    border.width: 2
+                }
+            }
         }
 
         Row {
@@ -1157,6 +1200,7 @@ ApplicationWindow {
         selectedHeroIndex = -1
         selectedHeroData = null
         selectedHeroName = ""
+        heroNameInput = ""
         updateHeroDetails()
     }
 
