@@ -26,7 +26,6 @@ QJsonObject encodeVariant(const QVariant &value);
 QJsonArray encodeArray(const QVariantList &list)
 {
     QJsonArray array;
-    array.reserve(list.size());
     for (const QVariant &item : list)
         array.append(encodeVariant(item));
     return array;

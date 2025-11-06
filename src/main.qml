@@ -28,6 +28,8 @@ ApplicationWindow {
     property string currentHeroDescription: ""
     property string selectedHeroName: ""
     property string heroNameInput: ""
+    property string lobbyStatusMessage: ""
+    property bool lobbyStatusIsError: false
 
     ListModel {
         id: heroCardModel
@@ -35,31 +37,31 @@ ApplicationWindow {
             heroId: "mage"
             name: qsTr("Mage")
             description: qsTr("A master of elemental sorcery with unmatched area damage.")
-            cardSource: "../assets/images/heroes_cards/mage.png"
+            cardSource: "qrc:/RuneboundMagic/assets/images/heroes_cards/mage.png"
         }
         ListElement {
             heroId: "warrior"
             name: qsTr("Warrior")
             description: qsTr("Heavy armor and relentless strength make the warrior unbreakable.")
-            cardSource: "../assets/images/heroes_cards/warrior.png"
+            cardSource: "qrc:/RuneboundMagic/assets/images/heroes_cards/warrior.png"
         }
         ListElement {
             heroId: "ranger"
             name: qsTr("Ranger")
             description: qsTr("Swift and precise, the ranger strikes from the shadows.")
-            cardSource: "../assets/images/heroes_cards/ranger.png"
+            cardSource: "qrc:/RuneboundMagic/assets/images/heroes_cards/ranger.png"
         }
         ListElement {
             heroId: "mystical_priestess"
             name: qsTr("Mystical Priestess")
             description: qsTr("Blessed by the runes, she heals allies and bends fate.")
-            cardSource: "../assets/images/heroes_cards/mystical_priestess.png"
+            cardSource: "qrc:/RuneboundMagic/assets/images/heroes_cards/mystical_priestess.png"
         }
     }
 
     FontLoader {
         id: signatureFont
-        source: "../assets/fonts/whispering-signature-personal-use/WhisperingSignature.ttf"
+        source: "qrc:/RuneboundMagic/assets/fonts/whispering-signature-personal-use/WhisperingSignature.ttf"
         onStatusChanged: {
             console.log("FontLoader status:",
                         status === FontLoader.Ready ? "Ready" :
@@ -71,10 +73,55 @@ ApplicationWindow {
         }
     }
 
+    AudioOutput {
+        id: introOutput
+        volume: 0.3
+        muted: false
+        onMutedChanged: console.log("IntroOutput muted:", muted)
+        onVolumeChanged: console.log("IntroOutput volume:", volume)
+        Component.onCompleted: console.log("IntroOutput device:", device.description)
+    }
+
+    AudioOutput {
+        id: introCueOutput
+        volume: 0.9
+        muted: false
+        onMutedChanged: console.log("IntroCueOutput muted:", muted)
+        onVolumeChanged: console.log("IntroCueOutput volume:", volume)
+        Component.onCompleted: console.log("IntroCueOutput device:", device.description)
+    }
+
+    AudioOutput {
+        id: wizardOutput
+        volume: 1.0
+        muted: false
+        onMutedChanged: console.log("WizardOutput muted:", muted)
+        onVolumeChanged: console.log("WizardOutput volume:", volume)
+        Component.onCompleted: console.log("WizardOutput device:", device.description)
+    }
+
+    AudioOutput {
+        id: guardianOutput
+        volume: 1.0
+        muted: false
+        onMutedChanged: console.log("GuardianOutput muted:", muted)
+        onVolumeChanged: console.log("GuardianOutput volume:", volume)
+        Component.onCompleted: console.log("GuardianOutput device:", device.description)
+    }
+
+    AudioOutput {
+        id: finaleOutput
+        volume: 1.0
+        muted: false
+        onMutedChanged: console.log("FinaleOutput muted:", muted)
+        onVolumeChanged: console.log("FinaleOutput volume:", volume)
+        Component.onCompleted: console.log("FinaleOutput device:", device.description)
+    }
+
     Image {
         id: backgroundImage
         anchors.fill: parent
-        source: "../assets/images/intro/MysticalTempleRuins.png"
+        source: "qrc:/RuneboundMagic/assets/images/intro/MysticalTempleRuins.png"
         fillMode: Image.PreserveAspectCrop
         opacity: 0.0
         smooth: true
@@ -100,7 +147,7 @@ ApplicationWindow {
         id: wizardImage
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
-        source: "../assets/images/heroes/black_wizard.png"
+        source: "qrc:/RuneboundMagic/assets/images/heroes/black_wizard.png"
         fillMode: Image.PreserveAspectFit
         width: Math.min(parent.width * 0.32, parent.height * 0.55)
         smooth: true
@@ -113,7 +160,7 @@ ApplicationWindow {
         id: guardianImage
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
-        source: "../assets/images/heroes/peiestsess.png"
+        source: "qrc:/RuneboundMagic/assets/images/heroes/peiestsess.png"
         fillMode: Image.PreserveAspectFit
         width: Math.min(parent.width * 0.3, parent.height * 0.5)
         smooth: true
@@ -128,7 +175,7 @@ ApplicationWindow {
         anchors.verticalCenterOffset: -70
         anchors.left: parent.left
         anchors.leftMargin: parent.width * 0.08
-        source: "../assets/images/heroes/peiestsess.png"
+        source: "qrc:/RuneboundMagic/assets/images/heroes/peiestsess.png"
         fillMode: Image.PreserveAspectFit
         width: Math.min(parent.width * 0.28, parent.height * 0.5)
         smooth: true
@@ -144,7 +191,7 @@ ApplicationWindow {
         anchors.verticalCenterOffset: -70
         anchors.right: parent.right
         anchors.rightMargin: parent.width * 0.08
-        source: "../assets/images/heroes/black_wizard.png"
+        source: "qrc:/RuneboundMagic/assets/images/heroes/black_wizard.png"
         fillMode: Image.PreserveAspectFit
         width: Math.min(parent.width * 0.28, parent.height * 0.5)
         smooth: true
@@ -165,7 +212,7 @@ ApplicationWindow {
 
         Image {
             id: finaleRedGem
-            source: "../assets/images/tiles/red_gem.png"
+            source: "qrc:/RuneboundMagic/assets/images/tiles/red_gem.png"
             width: 96
             height: 96
             smooth: true
@@ -207,7 +254,7 @@ ApplicationWindow {
 
         Image {
             id: finaleBlueGem
-            source: "../assets/images/tiles/blue_gem.png"
+            source: "qrc:/RuneboundMagic/assets/images/tiles/blue_gem.png"
             width: 96
             height: 96
             smooth: true
@@ -249,7 +296,7 @@ ApplicationWindow {
 
         Image {
             id: finaleTurquoiseGem
-            source: "../assets/images/tiles/turquoise_gem.png"
+            source: "qrc:/RuneboundMagic/assets/images/tiles/turquoise_gem.png"
             width: 96
             height: 96
             smooth: true
@@ -291,7 +338,7 @@ ApplicationWindow {
 
         Image {
             id: finaleGreenGem
-            source: "../assets/images/tiles/green_gem.png"
+            source: "qrc:/RuneboundMagic/assets/images/tiles/green_gem.png"
             width: 96
             height: 96
             smooth: true
@@ -335,7 +382,7 @@ ApplicationWindow {
     Image {
         id: logoImage
         anchors.centerIn: parent
-        source: "../assets/images/logo/logo.png"
+        source: "qrc:/RuneboundMagic/assets/images/logo/logo.png"
         fillMode: Image.PreserveAspectFit
         width: Math.min(parent.width * 0.4, parent.height * 0.4)
         height: width
@@ -383,7 +430,7 @@ ApplicationWindow {
 
             Image {
                 id: redGem
-                source: "../assets/images/tiles/red_gem.png"
+            source: "qrc:/RuneboundMagic/assets/images/tiles/red_gem.png"
                 width: 90
                 height: 90
                 fillMode: Image.PreserveAspectFit
@@ -394,7 +441,7 @@ ApplicationWindow {
 
             Image {
                 id: blueGem
-                source: "../assets/images/tiles/blue_gem.png"
+            source: "qrc:/RuneboundMagic/assets/images/tiles/blue_gem.png"
                 width: 90
                 height: 90
                 fillMode: Image.PreserveAspectFit
@@ -405,7 +452,7 @@ ApplicationWindow {
 
             Image {
                 id: turquoiseGem
-                source: "../assets/images/tiles/turquoise_gem.png"
+            source: "qrc:/RuneboundMagic/assets/images/tiles/turquoise_gem.png"
                 width: 90
                 height: 90
                 fillMode: Image.PreserveAspectFit
@@ -416,7 +463,7 @@ ApplicationWindow {
 
             Image {
                 id: greenGem
-                source: "../assets/images/tiles/green_gem.png"
+            source: "qrc:/RuneboundMagic/assets/images/tiles/green_gem.png"
                 width: 90
                 height: 90
                 fillMode: Image.PreserveAspectFit
@@ -527,7 +574,7 @@ ApplicationWindow {
             anchors.centerIn: parent
             width: parent.width * 0.85
             height: parent.height * 0.85
-            source: "../assets/images/lobby/Game_Lobby.png"
+            source: "qrc:/RuneboundMagic/assets/images/lobby/Game_Lobby.png"
             fillMode: Image.PreserveAspectFit
             smooth: true
         }
@@ -536,7 +583,7 @@ ApplicationWindow {
             id: heroCarousel
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.verticalCenter: parent.verticalCenter
-            anchors.verticalCenterOffset: -parent.height * 0.08
+            anchors.verticalCenterOffset: -parent.height * 0.14
             width: parent.width * 0.6
             height: parent.height * 0.4
             z: 1
@@ -664,7 +711,11 @@ ApplicationWindow {
                 id: heroNameField
                 width: parent.width
                 text: window.heroNameInput
-                onTextChanged: window.heroNameInput = text
+                onTextChanged: {
+                    window.heroNameInput = text
+                    window.lobbyStatusMessage = ""
+                    window.lobbyStatusIsError = false
+                }
                 placeholderText: qsTr("Type the name of your hero")
                 font.pixelSize: 20
                 font.family: signatureFont.name
@@ -674,12 +725,24 @@ ApplicationWindow {
                 selectByMouse: true
                 cursorVisible: true
                 padding: 12
+                inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
                 background: Rectangle {
                     radius: 22
                     color: "#1f2d35cc"
                     border.color: "#7ed1c2"
                     border.width: 2
                 }
+            }
+
+            Text {
+                text: window.lobbyStatusMessage
+                font.pixelSize: 16
+                font.family: signatureFont.name
+                color: window.lobbyStatusIsError ? "#ffb3a7" : "#b8f0e5"
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+                width: parent.width
+                opacity: window.lobbyStatusMessage.length > 0 ? 1.0 : 0.0
             }
         }
 
@@ -719,6 +782,7 @@ ApplicationWindow {
                 text: qsTr("Select Hero")
                 width: 200
                 height: 52
+                enabled: window.heroNameInput && window.heroNameInput.trim().length > 0
                 focusPolicy: Qt.NoFocus
                 background: Rectangle {
                     radius: 26
@@ -739,16 +803,30 @@ ApplicationWindow {
         }
     }
 
+    Connections {
+        target: typeof firestore !== "undefined" ? firestore : null
+        function onDocumentCreated(collectionPath, documentName) {
+            if (collectionPath !== "heroSelections")
+                return
+            lobbyStatusIsError = false
+            lobbyStatusMessage = qsTr("Selection saved successfully!")
+            console.log("✅ Firestore document created:", documentName)
+        }
+        function onLastErrorChanged() {
+            if (!firestore || !firestore.lastError || firestore.lastError.length === 0)
+                return
+            lobbyStatusIsError = true
+            lobbyStatusMessage = firestore.lastError
+            console.log("⚠️ Firestore error:", firestore.lastError)
+        }
+    }
+
     MediaPlayer {
         id: introTrack
-        source: "../assets/music/soundtrack.mp3"
+        source: "qrc:/RuneboundMagic/assets/music/soundtrack.mp3"
         autoPlay: true
         loops: MediaPlayer.Infinite
-        audioOutput: AudioOutput {
-            id: introOutput
-            volume: 0.3
-            muted: false
-        }
+        audioOutput: introOutput
 
         onErrorOccurred: function(error, errorString) {
             console.error("IntroTrack error:", errorString)
@@ -765,12 +843,9 @@ ApplicationWindow {
 
     MediaPlayer {
         id: introCue
-        source: "../assets/sounds/1.mp3"
+        source: "qrc:/RuneboundMagic/assets/sounds/1.mp3"
         autoPlay: false
-        audioOutput: AudioOutput {
-            volume: 0.8
-            muted: false
-        }
+        audioOutput: introCueOutput
 
         onErrorOccurred: function(error, errorString) {
             console.error("IntroCue error:", errorString)
@@ -791,12 +866,9 @@ ApplicationWindow {
 
     MediaPlayer {
         id: wizardCue
-        source: "../assets/sounds/2.mp3"
+        source: "qrc:/RuneboundMagic/assets/sounds/2.mp3"
         autoPlay: false
-        audioOutput: AudioOutput {
-            volume: 0.85
-            muted: false
-        }
+        audioOutput: wizardOutput
 
         onErrorOccurred: function(error, errorString) {
             console.error("WizardCue error:", errorString)
@@ -813,16 +885,14 @@ ApplicationWindow {
                 maybeStartGuardianScene()
             }
         }
+        Component.onCompleted: console.log("WizardCue ready, source:", source)
     }
 
     MediaPlayer {
         id: guardianCue
-        source: "../assets/sounds/3.mp3"
+        source: "qrc:/RuneboundMagic/assets/sounds/3.mp3"
         autoPlay: false
-        audioOutput: AudioOutput {
-            volume: 0.85
-            muted: false
-        }
+        audioOutput: guardianOutput
 
         onErrorOccurred: function(error, errorString) {
             console.error("GuardianCue error:", errorString)
@@ -843,12 +913,9 @@ ApplicationWindow {
 
     MediaPlayer {
         id: finaleCue
-        source: "../assets/sounds/4.mp3"
+        source: "qrc:/RuneboundMagic/assets/sounds/4.mp3"
         autoPlay: false
-        audioOutput: AudioOutput {
-            volume: 0.85
-            muted: false
-        }
+        audioOutput: finaleOutput
 
         onErrorOccurred: function(error, errorString) {
             console.error("FinaleCue error:", errorString)
@@ -943,6 +1010,14 @@ ApplicationWindow {
             introTrack.play()
 
         introCue.stop()
+        if (introCueOutput.muted) {
+            console.log("IntroCueOutput muted before play, unmuting.")
+            introCueOutput.muted = false
+        }
+        if (introCueOutput.volume < 0.5) {
+            introCueOutput.volume = 0.9
+            console.log("IntroCueOutput volume reset to", introCueOutput.volume)
+        }
         introCue.play()
         wizardCue.stop()
         guardianCue.stop()
@@ -1010,8 +1085,21 @@ ApplicationWindow {
         if (introCue.playbackState === MediaPlayer.PlayingState)
             introCue.stop()
 
+        if (wizardOutput.muted) {
+            console.log("WizardOutput muted before play, unmuting.")
+            wizardOutput.muted = false
+        }
+        if (wizardOutput.volume < 0.99) {
+            wizardOutput.volume = 1.0
+            console.log("WizardOutput volume reset to", wizardOutput.volume)
+        }
+
         wizardCue.stop()
+        console.log("WizardCue status before play:", wizardCue.mediaStatus,
+                    "state:", wizardCue.playbackState,
+                    "error:", wizardCue.error, "hasAudio:", wizardCue.hasAudio)
         wizardCue.play()
+        console.log("WizardCue play() called, new state:", wizardCue.playbackState)
         guardianTransitionTimer.stop()
         guardianSceneReady = false
         guardianSceneStarted = false
@@ -1054,6 +1142,15 @@ ApplicationWindow {
 
         guardianImage.opacity = 1.0
         guardianNarration.opacity = 1.0
+
+        if (guardianOutput.muted) {
+            console.log("GuardianOutput muted before play, unmuting.")
+            guardianOutput.muted = false
+        }
+        if (guardianOutput.volume < 0.99) {
+            guardianOutput.volume = 1.0
+            console.log("GuardianOutput volume reset to", guardianOutput.volume)
+        }
 
         guardianCue.stop()
         guardianCue.play()
@@ -1119,12 +1216,52 @@ ApplicationWindow {
 
     function selectHero() {
         const hero = currentHeroData()
-        if (!hero)
+        if (!hero) {
+            lobbyStatusIsError = true
+            lobbyStatusMessage = qsTr("⚠️ Please pick a hero before saving.")
             return
+        }
+
+        const enteredName = heroNameInput ? heroNameInput.trim() : ""
+        if (!enteredName.length) {
+            lobbyStatusIsError = true
+            lobbyStatusMessage = qsTr("⚠️ Enter the hero name before saving.")
+            if (heroNameField)
+                heroNameField.forceActiveFocus()
+            return
+        }
+
         selectedHeroIndex = heroCarousel.currentIndex
         selectedHeroData = hero
         selectedHeroName = hero.name
-        console.log("✅ Selected hero:", hero.name)
+        heroNameInput = enteredName
+
+        const hasFirestore = typeof firestore !== "undefined" && firestore !== null
+        if (!hasFirestore || typeof firestore.createDocument !== "function") {
+            console.log("⚠️ Firestore service is unavailable in QML context.")
+            lobbyStatusIsError = true
+            lobbyStatusMessage = qsTr("⚠️ Database service is not available.")
+            return
+        }
+
+        if (!firestore.ready) {
+            console.log("⚠️ Firestore configuration incomplete or not ready.")
+            lobbyStatusIsError = true
+            lobbyStatusMessage = qsTr("⚠️ Unable to connect to the database. Try again later.")
+            return
+        }
+
+        const payload = {
+            userName: enteredName,
+            heroId: hero.heroId,
+            heroName: hero.name,
+            savedAt: new Date().toISOString()
+        }
+
+        lobbyStatusIsError = false
+        lobbyStatusMessage = qsTr("Saving selection...")
+        firestore.createDocument("heroSelections", payload)
+        console.log("✅ Selected hero:", hero.name, "for player:", enteredName)
     }
 
     function goBack() {
@@ -1154,6 +1291,14 @@ ApplicationWindow {
         guardianCue.stop()
         finaleCue.stop()
         finaleCue.position = 0
+        if (finaleOutput.muted) {
+            console.log("FinaleOutput muted before play, unmuting.")
+            finaleOutput.muted = false
+        }
+        if (finaleOutput.volume < 0.99) {
+            finaleOutput.volume = 1.0
+            console.log("FinaleOutput volume reset to", finaleOutput.volume)
+        }
         finaleCue.play()
         finaleGuardian.opacity = 1.0
         finaleWizard.opacity = 1.0
@@ -1201,6 +1346,8 @@ ApplicationWindow {
         selectedHeroData = null
         selectedHeroName = ""
         heroNameInput = ""
+        lobbyStatusMessage = ""
+        lobbyStatusIsError = false
         updateHeroDetails()
     }
 
