@@ -1,0 +1,124 @@
+{
+  "items": {
+    "weapon_crossbow_aurora": {
+      "name": "Aurora Repeater",
+      "description": "Compact crossbow that fires prismatic bolts.",
+      "slot": "weapon",
+      "type": "weapon",
+      "rarity": "rare",
+      "baseValue": 540,
+      "maxStack": 1,
+      "icon": "assets/images/weapons/crossbow.png"
+    },
+    "weapon_staff_arcflare": {
+      "name": "Arcflare Staff",
+      "description": "Mage staff channeling raw lightning into precise beams.",
+      "slot": "weapon",
+      "type": "weapon",
+      "rarity": "epic",
+      "baseValue": 720,
+      "maxStack": 1,
+      "icon": "assets/images/weapons/mage_staff.png"
+    },
+    "weapon_rod_runewarden": {
+      "name": "Runewarden Rod",
+      "description": "A crystalline rod used to anchor protective wards.",
+      "slot": "weapon",
+      "type": "weapon",
+      "rarity": "uncommon",
+      "baseValue": 420,
+      "maxStack": 1,
+      "icon": "assets/images/weapons/rod.png"
+    },
+    "weapon_sword_shard": {
+      "name": "Shardblade Saber",
+      "description": "Short sword forged from enchanted volcanic glass.",
+      "slot": "weapon",
+      "type": "weapon",
+      "rarity": "rare",
+      "baseValue": 610,
+      "maxStack": 1,
+      "icon": "assets/images/weapons/shord.png"
+    },
+    "shield_bastion": {
+      "name": "Rune Bastion Shield",
+      "description": "Tower shield etched with defensive sigils.",
+      "slot": "shield",
+      "type": "armor",
+      "rarity": "rare",
+      "baseValue": 380,
+      "maxStack": 1,
+      "icon": "assets/images/shield/shield.png"
+    },
+    "shield_burnished_bastion": {
+      "name": "Burnished Bastion Shield",
+      "description": "Golden variant that reflects elemental damage.",
+      "slot": "shield",
+      "type": "armor",
+      "rarity": "epic",
+      "baseValue": 460,
+      "maxStack": 1,
+      "icon": "assets/images/shield/shield_b.png"
+    },
+    "accessory_amulet_ember": {
+      "name": "Ember Amulet",
+      "description": "Necklace granting resistance against burn effects.",
+      "slot": "amulet",
+      "type": "accessory",
+      "rarity": "rare",
+      "baseValue": 280,
+      "maxStack": 1,
+      "icon": "assets/images/Accessories/amulet.png"
+    },
+    "accessory_amulet_burnished": {
+      "name": "Burnished Ember Amulet",
+      "description": "Amplifies fire runes; glows when enemies are near.",
+      "slot": "amulet",
+      "type": "accessory",
+      "rarity": "epic",
+      "baseValue": 360,
+      "maxStack": 1,
+      "icon": "assets/images/Accessories/amulet_b.png"
+    },
+    "accessory_belt_guardian": {
+      "name": "Guardian Belt",
+      "description": "Utility belt with potion loops and rune stones.",
+      "slot": "belt",
+      "type": "accessory",
+      "rarity": "uncommon",
+      "baseValue": 190,
+      "maxStack": 1,
+      "icon": "assets/images/Accessories/belt.png"
+    },
+    "accessory_belt_burnished": {
+      "name": "Burnished Guardian Belt",
+      "description": "Holds additional mana flasks and quest tokens.",
+      "slot": "belt",
+      "type": "accessory",
+      "rarity": "rare",
+      "baseValue": 240,
+      "maxStack": 1,
+      "icon": "assets/images/Accessories/beld_b.png"
+    },
+    "accessory_ring_sigil": {
+      "name": "Sigil Ring",
+      "description": "Ring that stores one spell for instant release.",
+      "slot": "ring",
+      "type": "accessory",
+      "rarity": "rare",
+      "baseValue": 320,
+      "maxStack": 1,
+      "icon": "assets/images/Accessories/ring.png"
+    }
+  },
+  "metadata": {
+    "category": "Weapons/Accessories",
+    "source": [
+      "assets/images/weapons",
+      "assets/images/shield",
+      "assets/images/Accessories"
+    ],
+    "createdBy": "Codex",
+    "version": "1.0.0"
+  }
+}

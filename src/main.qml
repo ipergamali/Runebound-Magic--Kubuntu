@@ -30,6 +30,29 @@ ApplicationWindow {
     property string heroNameInput: ""
     property string lobbyStatusMessage: ""
     property bool lobbyStatusIsError: false
+    property var difficultyOptions: [qsTr("Easy"), qsTr("Normal"), qsTr("Hard")]
+    property int difficultyIndex: 1
+    property string currentDifficulty: difficultyOptions.length > 0
+                                     ? difficultyOptions[Math.max(0, Math.min(difficultyOptions.length - 1, difficultyIndex))]
+                                     : ""
+    property int currentHeroHealth: 0
+    property int currentHeroMana: 0
+    property int currentHeroPower: 0
+    property string currentHeroElement: qsTr("Unknown")
+    property bool inventoryOverlayVisible: false
+    property var inventoryCategories: [
+        qsTr("Weapons"),
+        qsTr("Armor"),
+        qsTr("Shields"),
+        qsTr("Accessories"),
+        qsTr("Consumables"),
+        qsTr("Spells & Scrolls"),
+        qsTr("Runes & Gems"),
+        qsTr("Crafting Materials"),
+        qsTr("Quest Items"),
+        qsTr("Gold & Currency")
+    ]
+    property int inventorySlotsPerRow: 5
 
     ListModel {
         id: heroCardModel
@@ -38,24 +61,40 @@ ApplicationWindow {
             name: qsTr("Mage")
             description: qsTr("A master of elemental sorcery with unmatched area damage.")
             cardSource: "qrc:/RuneboundMagic/assets/images/heroes_cards/mage.png"
+            health: 80
+            mana: 140
+            power: 95
+            element: qsTr("Arcane")
         }
         ListElement {
             heroId: "warrior"
             name: qsTr("Warrior")
             description: qsTr("Heavy armor and relentless strength make the warrior unbreakable.")
             cardSource: "qrc:/RuneboundMagic/assets/images/heroes_cards/warrior.png"
+            health: 130
+            mana: 60
+            power: 90
+            element: qsTr("Steel")
         }
         ListElement {
             heroId: "ranger"
             name: qsTr("Ranger")
             description: qsTr("Swift and precise, the ranger strikes from the shadows.")
             cardSource: "qrc:/RuneboundMagic/assets/images/heroes_cards/ranger.png"
+            health: 90
+            mana: 80
+            power: 85
+            element: qsTr("Wind")
         }
         ListElement {
             heroId: "mystical_priestess"
             name: qsTr("Mystical Priestess")
             description: qsTr("Blessed by the runes, she heals allies and bends fate.")
             cardSource: "qrc:/RuneboundMagic/assets/images/heroes_cards/mystical_priestess.png"
+            health: 95
+            mana: 150
+            power: 72
+            element: qsTr("Spirit")
         }
     }
 
@@ -579,6 +618,84 @@ ApplicationWindow {
             smooth: true
         }
 
+        Column {
+            id: difficultyBanner
+            anchors.horizontalCenter: lobbyBackdrop.horizontalCenter
+            anchors.top: lobbyBackdrop.top
+            anchors.topMargin: lobbyBackdrop.height * 0.04
+            width: lobbyBackdrop.width * 0.4
+            spacing: 8
+            z: 3
+
+            Text {
+                text: qsTr("Difficulty")
+                font.pixelSize: 24
+                font.family: signatureFont.name
+                color: "#f8eaff"
+                horizontalAlignment: Text.AlignHCenter
+                width: parent.width
+            }
+
+            ComboBox {
+                id: difficultySelector
+                width: parent.width
+                model: window.difficultyOptions
+                focusPolicy: Qt.NoFocus
+                font.pixelSize: 20
+                font.family: signatureFont.name
+                indicator: Rectangle {
+                    implicitWidth: 18
+                    implicitHeight: 10
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    anchors.rightMargin: 18
+                    color: "#f8eaff"
+                    border.width: 0
+                }
+                contentItem: Text {
+                    text: difficultySelector.displayText
+                    font.pixelSize: difficultySelector.font.pixelSize
+                    font.family: difficultySelector.font.family
+                    color: "#f8eaff"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                }
+                background: Rectangle {
+                    radius: 22
+                    color: "#1f2d35cc"
+                    border.color: "#d8b6ff"
+                    border.width: 2
+                }
+                delegate: ItemDelegate {
+                    width: difficultySelector.width
+                    contentItem: Text {
+                        text: modelData
+                        color: "#1f1f28"
+                        font.pixelSize: 18
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    highlighted: difficultySelector.highlightedIndex === index
+                }
+                onActivated: window.difficultyIndex = currentIndex
+                Component.onCompleted: currentIndex = Math.max(0,
+                                                              Math.min(model.length - 1, window.difficultyIndex))
+                Connections {
+                    target: window
+                    function onDifficultyIndexChanged() {
+                        if (!difficultySelector)
+                            return
+                        const clamped = Math.max(0,
+                                                 Math.min(window.difficultyOptions.length - 1,
+                                                          window.difficultyIndex))
+                        if (difficultySelector.currentIndex !== clamped)
+                            difficultySelector.currentIndex = clamped
+                    }
+                }
+            }
+        }
+
         PathView {
             id: heroCarousel
             anchors.horizontalCenter: parent.horizontalCenter
@@ -799,6 +916,362 @@ ApplicationWindow {
                     verticalAlignment: Text.AlignVCenter
                 }
                 onClicked: selectHero()
+            }
+        }
+    }
+
+    Item {
+        id: heroSummaryLayer
+        anchors.fill: parent
+        visible: sceneIndex === 6
+        opacity: visible ? 1.0 : 0.0
+        enabled: visible
+        z: 4
+
+        Rectangle {
+            anchors.fill: parent
+            color: "#050209d9"
+        }
+
+        Rectangle {
+            id: heroSummaryPanel
+            anchors.centerIn: parent
+            width: parent.width * 0.75
+            height: parent.height * 0.75
+            radius: 28
+            color: "#140d1f"
+            border.color: "#7ed1c2"
+            border.width: 2
+            opacity: 0.95
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: 32
+                spacing: 24
+
+                Text {
+                    text: qsTr("Hero Ready")
+                    font.pixelSize: 30
+                    font.family: signatureFont.name
+                    color: "#f8eaff"
+                    horizontalAlignment: Text.AlignHCenter
+                    width: parent.width
+                }
+
+                Row {
+                    width: parent.width
+                    spacing: 40
+
+                    MouseArea {
+                        id: inventoryTriggerArea
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 140
+                        height: heroSummaryPanel.height * 0.45
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: window.inventoryOverlayVisible = true
+                        hoverEnabled: true
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 12
+                            color: inventoryTriggerArea.containsMouse ? "#ffffff11" : "transparent"
+                            border.color: "#d8b6ff55"
+                            border.width: 1
+                        }
+
+                        Column {
+                            anchors.centerIn: parent
+                            spacing: 6
+                            width: parent.width
+                            z: 1
+
+                            Image {
+                                id: inventoryIcon
+                                source: "qrc:/RuneboundMagic/assets/images/Inventory/iventory.png"
+                                width: 96
+                                height: 96
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                fillMode: Image.PreserveAspectFit
+                                smooth: true
+                            }
+
+                            Text {
+                                text: qsTr("Inventory")
+                                font.pixelSize: 20
+                                font.family: signatureFont.name
+                                color: "#b8f0e5"
+                                horizontalAlignment: Text.AlignHCenter
+                                width: parent.width
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        width: parent.width * 0.35
+                        height: heroSummaryPanel.height * 0.45
+                        radius: 18
+                        color: "#1a1324"
+                        border.color: "#d8b6ff"
+                        border.width: 2
+                        z: 1
+
+                        Image {
+                            anchors.fill: parent
+                            anchors.margins: 12
+                            source: selectedHeroData && selectedHeroData.cardSource
+                                    ? selectedHeroData.cardSource
+                                    : ""
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
+                        }
+                    }
+
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 10
+                        width: parent.width * 0.45
+
+                        Text {
+                            text: heroNameInput && heroNameInput.length
+                                  ? qsTr("Chosen Name: %1").arg(heroNameInput)
+                                  : qsTr("Chosen Name: %1").arg(selectedHeroName)
+                            font.pixelSize: 22
+                            font.family: signatureFont.name
+                            color: "#b8f0e5"
+                            wrapMode: Text.Wrap
+                        }
+
+                        Text {
+                            text: qsTr("Hero: %1").arg(selectedHeroName || qsTr("Unknown"))
+                            font.pixelSize: 22
+                            font.family: signatureFont.name
+                            color: "#b8f0e5"
+                        }
+
+                        Text {
+                            text: qsTr("Difficulty: %1").arg(window.currentDifficulty || window.difficultyOptions[0])
+                            font.pixelSize: 20
+                            font.family: signatureFont.name
+                            color: "#ffd166"
+                        }
+
+                        Column {
+                            spacing: 6
+
+                            Text {
+                                text: qsTr("Health: %1").arg(selectedHeroData && selectedHeroData.health !== undefined
+                                                            ? selectedHeroData.health : 0)
+                                font.pixelSize: 18
+                                font.family: signatureFont.name
+                                color: "#f8eaff"
+                            }
+                            Text {
+                                text: qsTr("Mana: %1").arg(selectedHeroData && selectedHeroData.mana !== undefined
+                                                          ? selectedHeroData.mana : 0)
+                                font.pixelSize: 18
+                                font.family: signatureFont.name
+                                color: "#f8eaff"
+                            }
+                            Text {
+                                text: qsTr("Power: %1").arg(selectedHeroData && selectedHeroData.power !== undefined
+                                                           ? selectedHeroData.power : 0)
+                                font.pixelSize: 18
+                                font.family: signatureFont.name
+                                color: "#f8eaff"
+                            }
+                            Text {
+                                text: qsTr("Element: %1").arg(selectedHeroData && selectedHeroData.element
+                                                              ? selectedHeroData.element
+                                                              : qsTr("Unknown"))
+                                font.pixelSize: 18
+                                font.family: signatureFont.name
+                                color: "#f8eaff"
+                            }
+                        }
+                    }
+                }
+
+                Text {
+                    text: window.lobbyStatusMessage
+                    font.pixelSize: 16
+                    font.family: signatureFont.name
+                    color: window.lobbyStatusIsError ? "#ffb3a7" : "#b8f0e5"
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    width: parent.width
+                    opacity: window.lobbyStatusMessage.length ? 1.0 : 0.0
+                }
+
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 32
+
+                    Button {
+                        id: changeHeroButton
+                        text: qsTr("Change Hero")
+                        width: 200
+                        height: 52
+                        focusPolicy: Qt.NoFocus
+                        background: Rectangle {
+                            radius: 26
+                            color: "#1f2d35"
+                            border.color: "#7ed1c2"
+                            border.width: 2
+                        }
+                        contentItem: Text {
+                            text: changeHeroButton.text
+                            font.pixelSize: 22
+                            font.family: signatureFont.name
+                            color: "#b8f0e5"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        onClicked: returnToLobbySelection()
+                    }
+
+                    Button {
+                        id: battleButton
+                        text: qsTr("Start Battle")
+                        width: 200
+                        height: 52
+                        enabled: !!selectedHeroData
+                        focusPolicy: Qt.NoFocus
+                        background: Rectangle {
+                            radius: 26
+                            color: "#513860"
+                            border.color: "#d8b6ff"
+                            border.width: 2
+                        }
+                        contentItem: Text {
+                            text: battleButton.text
+                            font.pixelSize: 22
+                            font.family: signatureFont.name
+                            color: "#f8eaff"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        onClicked: startBattle()
+                    }
+                }
+            }
+        }
+
+        Item {
+            id: inventoryOverlay
+            anchors.fill: parent
+            visible: window.inventoryOverlayVisible
+            opacity: visible ? 1.0 : 0.0
+            enabled: visible
+            z: 6
+
+            Rectangle {
+                anchors.fill: parent
+                color: "#030207d0"
+            }
+
+            Rectangle {
+                id: inventoryPanel
+                anchors.centerIn: parent
+                width: heroSummaryPanel.width
+                height: heroSummaryPanel.height
+                radius: 28
+                color: "#0f0a15"
+                border.color: "#d8b6ff"
+                border.width: 2
+
+                Item {
+                    anchors.fill: parent
+                    anchors.margins: 32
+
+                    Row {
+                        id: inventoryHeader
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        spacing: 16
+
+                        Text {
+                            text: qsTr("Hero Inventory")
+                            font.pixelSize: 30
+                            font.family: signatureFont.name
+                            color: "#f8eaff"
+                            horizontalAlignment: Text.AlignLeft
+                            width: parent.width * 0.7
+                        }
+                        Button {
+                            id: closeInventoryButton
+                            text: qsTr("Close")
+                            width: 140
+                            height: 48
+                            focusPolicy: Qt.NoFocus
+                            background: Rectangle {
+                                radius: 22
+                                color: "#190f28"
+                                border.color: "#7ed1c2"
+                                border.width: 2
+                            }
+                            contentItem: Text {
+                                text: closeInventoryButton.text
+                                font.pixelSize: 18
+                                font.family: signatureFont.name
+                                color: "#b8f0e5"
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            onClicked: window.inventoryOverlayVisible = false
+                        }
+                    }
+
+                    Flickable {
+                        id: inventoryFlick
+                        anchors.top: inventoryHeader.bottom
+                        anchors.topMargin: 18
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        contentWidth: width
+                        contentHeight: inventoryContent.implicitHeight
+                        clip: true
+
+                        Column {
+                            id: inventoryContent
+                            width: inventoryFlick.width
+                            spacing: 12
+
+                            Repeater {
+                                model: window.inventoryCategories
+                                delegate: Row {
+                                    spacing: 18
+                                    width: inventoryContent.width
+                                    property string categoryName: modelData
+
+                                    Text {
+                                        text: categoryName
+                                        font.pixelSize: 18
+                                        font.family: signatureFont.name
+                                        color: "#ffd166"
+                                        width: inventoryContent.width * 0.25
+                                    }
+
+                                    Row {
+                                        spacing: 12
+                                        Repeater {
+                                            model: window.inventorySlotsPerRow
+                                            delegate: Rectangle {
+                                                width: 64
+                                                height: 64
+                                                radius: 8
+                                                color: "#b89c5a22"
+                                                border.color: "#c9ad6f"
+                                                border.width: 2
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -1200,6 +1673,12 @@ ApplicationWindow {
         currentHeroIndex = heroCarousel.currentIndex
         currentHeroName = hero.name
         currentHeroDescription = hero.description
+        currentHeroHealth = hero.health !== undefined ? hero.health : 0
+        currentHeroMana = hero.mana !== undefined ? hero.mana : 0
+        currentHeroPower = hero.power !== undefined ? hero.power : 0
+        currentHeroElement = hero.element !== undefined && hero.element.length
+                             ? hero.element
+                             : qsTr("Unknown")
     }
 
     function nextHero() {
@@ -1251,10 +1730,19 @@ ApplicationWindow {
             return
         }
 
+        const heroStats = {
+            health: hero.health !== undefined ? hero.health : 0,
+            mana: hero.mana !== undefined ? hero.mana : 0,
+            power: hero.power !== undefined ? hero.power : 0,
+            element: hero.element !== undefined && hero.element.length ? hero.element : qsTr("Unknown")
+        }
+
         const payload = {
             userName: enteredName,
             heroId: hero.heroId,
             heroName: hero.name,
+            difficulty: window.currentDifficulty || window.difficultyOptions[0],
+            stats: heroStats,
             savedAt: new Date().toISOString()
         }
 
@@ -1262,6 +1750,20 @@ ApplicationWindow {
         lobbyStatusMessage = qsTr("Saving selection...")
         firestore.createDocument("heroSelections", payload)
         console.log("✅ Selected hero:", hero.name, "for player:", enteredName)
+        showHeroSummary()
+    }
+
+    function showHeroSummary() {
+        sceneIndex = 6
+        inventoryOverlayVisible = false
+    }
+
+    function returnToLobbySelection() {
+        sceneIndex = 5
+        inventoryOverlayVisible = false
+        if (selectedHeroIndex >= 0 && heroCarousel)
+            heroCarousel.currentIndex = selectedHeroIndex
+        updateHeroDetails()
     }
 
     function goBack() {
@@ -1348,6 +1850,8 @@ ApplicationWindow {
         heroNameInput = ""
         lobbyStatusMessage = ""
         lobbyStatusIsError = false
+        difficultyIndex = 1
+        inventoryOverlayVisible = false
         updateHeroDetails()
     }
 

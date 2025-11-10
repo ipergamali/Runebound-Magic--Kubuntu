@@ -28,6 +28,7 @@ qt_add_qml_module(RuneboundMagicApp
         assets/images/heroes_cards/warrior.png
         assets/images/heroes_cards/ranger.png
         assets/images/heroes_cards/mystical_priestess.png
+        assets/images/Inventory/iventory.png
         assets/images/tiles/red_gem.png
         assets/images/tiles/blue_gem.png
         assets/images/tiles/turquoise_gem.png

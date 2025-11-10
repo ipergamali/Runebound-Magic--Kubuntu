@@ -1,0 +1,89 @@
+{
+  "items": {
+    "potion_healing": {
+      "name": "Healing Potion",
+      "description": "Restores 50 HP when used.",
+      "type": "potion",
+      "rarity": "common",
+      "baseValue": 50,
+      "maxStack": 10,
+      "icon": "healing_potion.png"
+    },
+    "rune_fire": {
+      "name": "Fire Rune",
+      "description": "A glowing rune imbued with flame energy.",
+      "type": "rune",
+      "rarity": "rare",
+      "baseValue": 200,
+      "maxStack": 1,
+      "icon": "rune_fire.png"
+    },
+    "sword_ember": {
+      "name": "Ember Sword",
+      "description": "Forged in the heart of a dying volcano. Adds +20 fire damage.",
+      "type": "weapon",
+      "rarity": "epic",
+      "baseValue": 750,
+      "maxStack": 1,
+      "icon": "sword_ember.png"
+    }
+  },
+  "users": {
+    "user_001": {
+      "profile": {
+        "username": "ArcMage",
+        "level": 12,
+        "xp": 2450,
+        "gold": 320,
+        "mana": 80,
+        "maxMana": 120,
+        "inventorySize": 25
+      },
+      "inventory": {
+        "potion_healing": {
+          "itemId": "potion_healing",
+          "quantity": 5,
+          "equipped": false,
+          "acquiredAt": "2025-11-10T18:00:00Z"
+        },
+        "rune_fire": {
+          "itemId": "rune_fire",
+          "quantity": 1,
+          "equipped": true,
+          "durability": 90,
+          "enchantLevel": 2,
+          "acquiredAt": "2025-11-08T15:32:00Z"
+        }
+      },
+      "equipment": {
+        "weapon": {
+          "itemId": "sword_ember",
+          "durability": 80,
+          "equippedAt": "2025-11-09T19:45:00Z"
+        },
+        "rune": {
+          "itemId": "rune_fire",
+          "equippedAt": "2025-11-08T15:32:00Z"
+        }
+      }
+    }
+  },
+  "recipes": {
+    "fire_potion": {
+      "name": "Fire Resistance Potion",
+      "result": "potion_fire_resist",
+      "ingredients": {
+        "potion_healing": 1,
+        "rune_fire": 1
+      },
+      "craftingTimeSec": 30
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "updated": "2025-11-10T20:00:00Z",
+    "createdBy": "Joanne Pergamali",
+    "game": "Runebound Magic",
+    "description": "Firestore schema for user inventory, items, crafting, and equipment system."
+  }
+}

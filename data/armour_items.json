@@ -1,0 +1,120 @@
+{
+  "items": {
+    "armor_boots_vanguard": {
+      "name": "Vanguard Rune Boots",
+      "description": "Reinforced leather boots traced with runic stitching. Adds +5 movement speed.",
+      "slot": "boots",
+      "type": "armor",
+      "rarity": "uncommon",
+      "baseValue": 180,
+      "maxStack": 1,
+      "icon": "assets/images/Armour/boots/boots.png"
+    },
+    "armor_boots_burnished": {
+      "name": "Burnished Vanguard Boots",
+      "description": "A burnished variant offering better warding against frost.",
+      "slot": "boots",
+      "type": "armor",
+      "rarity": "rare",
+      "baseValue": 240,
+      "maxStack": 1,
+      "icon": "assets/images/Armour/boots/boots_b.png"
+    },
+    "armor_boots_cinder": {
+      "name": "Cinder Scout Boots",
+      "description": "Lightweight greaves that leave ember trails, perfect for scouts.",
+      "slot": "boots",
+      "type": "armor",
+      "rarity": "rare",
+      "baseValue": 260,
+      "maxStack": 1,
+      "icon": "assets/images/Armour/boots/buttos_c.png"
+    },
+    "armor_chest_guardian": {
+      "name": "Guardian Runeplate",
+      "description": "Standard issue runeplate worn by temple guardians.",
+      "slot": "chest",
+      "type": "armor",
+      "rarity": "rare",
+      "baseValue": 420,
+      "maxStack": 1,
+      "icon": "assets/images/Armour/chest/chest.png"
+    },
+    "armor_chest_guardian_burnished": {
+      "name": "Burnished Guardian Runeplate",
+      "description": "Enhanced plating quenched in liquid mana for higher durability.",
+      "slot": "chest",
+      "type": "armor",
+      "rarity": "epic",
+      "baseValue": 520,
+      "maxStack": 1,
+      "icon": "assets/images/Armour/chest/chest_b.png"
+    },
+    "armor_chest_warcaster": {
+      "name": "Warcaster Vestments",
+      "description": "Ceremonial armor for high-ranking casters, tailored for agility.",
+      "slot": "chest",
+      "type": "armor",
+      "rarity": "rare",
+      "baseValue": 460,
+      "maxStack": 1,
+      "icon": "assets/images/Armour/chest/chest-women.png"
+    },
+    "armor_chest_warcaster_burnished": {
+      "name": "Burnished Warcaster Vestments",
+      "description": "Upgraded vestments with shimmering rune embroidery.",
+      "slot": "chest",
+      "type": "armor",
+      "rarity": "epic",
+      "baseValue": 560,
+      "maxStack": 1,
+      "icon": "assets/images/Armour/chest/chest-women_b.png"
+    },
+    "armor_gloves_channeler": {
+      "name": "Channeler Gauntlets",
+      "description": "Gloves lined with arcane conduits to amplify spell focus.",
+      "slot": "gloves",
+      "type": "armor",
+      "rarity": "uncommon",
+      "baseValue": 210,
+      "maxStack": 1,
+      "icon": "assets/images/Armour/gloves/gloves.png"
+    },
+    "armor_gloves_channeler_burnished": {
+      "name": "Burnished Channeler Gauntlets",
+      "description": "Greater focus conduits and reinforced plating.",
+      "slot": "gloves",
+      "type": "armor",
+      "rarity": "rare",
+      "baseValue": 280,
+      "maxStack": 1,
+      "icon": "assets/images/Armour/gloves/gloves_b.png"
+    },
+    "armor_helmet_seer": {
+      "name": "Seer’s Visor",
+      "description": "Helm with crystalline lenses that sharpen rune sight.",
+      "slot": "helmet",
+      "type": "armor",
+      "rarity": "rare",
+      "baseValue": 300,
+      "maxStack": 1,
+      "icon": "assets/images/Armour/helmet/helmet.png"
+    },
+    "armor_helmet_seer_burnished": {
+      "name": "Burnished Seer’s Visor",
+      "description": "Upgraded helm lined with golden glyphs for mind protection.",
+      "slot": "helmet",
+      "type": "armor",
+      "rarity": "epic",
+      "baseValue": 380,
+      "maxStack": 1,
+      "icon": "assets/images/Armour/helmet/helmet_b.png"
+    }
+  },
+  "metadata": {
+    "category": "Armor",
+    "source": "assets/images/Armour",
+    "createdBy": "Codex",
+    "version": "1.0.0"
+  }
+}
