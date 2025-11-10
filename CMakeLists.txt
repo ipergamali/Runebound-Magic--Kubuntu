@@ -28,6 +28,28 @@ qt_add_qml_module(RuneboundMagicApp
         assets/images/heroes_cards/warrior.png
         assets/images/heroes_cards/ranger.png
         assets/images/heroes_cards/mystical_priestess.png
+        assets/images/Armour/boots/boots.png
+        assets/images/Armour/boots/boots_b.png
+        assets/images/Armour/boots/buttos_c.png
+        assets/images/Armour/chest/chest.png
+        assets/images/Armour/chest/chest_b.png
+        assets/images/Armour/chest/chest-women.png
+        assets/images/Armour/chest/chest-women_b.png
+        assets/images/Armour/gloves/gloves.png
+        assets/images/Armour/gloves/gloves_b.png
+        assets/images/Armour/helmet/helmet.png
+        assets/images/Armour/helmet/helmet_b.png
+        assets/images/Accessories/amulet.png
+        assets/images/Accessories/amulet_b.png
+        assets/images/Accessories/belt.png
+        assets/images/Accessories/beld_b.png
+        assets/images/Accessories/ring.png
+        assets/images/shield/shield.png
+        assets/images/shield/shield_b.png
+        assets/images/weapons/crossbow.png
+        assets/images/weapons/mage_staff.png
+        assets/images/weapons/rod.png
+        assets/images/weapons/shord.png
         assets/images/Inventory/iventory.png
         assets/images/tiles/red_gem.png
         assets/images/tiles/blue_gem.png

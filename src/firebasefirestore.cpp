@@ -85,6 +85,71 @@ QJsonObject encodeVariant(const QVariant &value)
 
 } // namespace
 
+namespace {
+
+QVariant decodeVariant(const QJsonObject &valueObject);
+
+QVariantList decodeArray(const QJsonObject &arrayObject)
+{
+    QVariantList list;
+    const QJsonArray values = arrayObject.value(QStringLiteral("values")).toArray();
+    for (const QJsonValue &value : values) {
+        if (value.isObject())
+            list.append(decodeVariant(value.toObject()));
+    }
+    return list;
+}
+
+QVariantMap decodeMap(const QJsonObject &mapObject)
+{
+    QVariantMap map;
+    for (auto it = mapObject.constBegin(), end = mapObject.constEnd(); it != end; ++it) {
+        if (it.value().isObject())
+            map.insert(it.key(), decodeVariant(it.value().toObject()));
+    }
+    return map;
+}
+
+QVariant decodeVariant(const QJsonObject &valueObject)
+{
+    if (valueObject.contains(QStringLiteral("nullValue")))
+        return QVariant();
+    if (valueObject.contains(QStringLiteral("booleanValue")))
+        return valueObject.value(QStringLiteral("booleanValue")).toBool();
+    if (valueObject.contains(QStringLiteral("integerValue")))
+        return valueObject.value(QStringLiteral("integerValue")).toString().toLongLong();
+    if (valueObject.contains(QStringLiteral("doubleValue")))
+        return valueObject.value(QStringLiteral("doubleValue")).toDouble();
+    if (valueObject.contains(QStringLiteral("timestampValue")))
+        return valueObject.value(QStringLiteral("timestampValue")).toString();
+    if (valueObject.contains(QStringLiteral("stringValue")))
+        return valueObject.value(QStringLiteral("stringValue")).toString();
+    if (valueObject.contains(QStringLiteral("mapValue"))) {
+        const QJsonObject fieldsObject = valueObject.value(QStringLiteral("mapValue")).toObject().value(QStringLiteral("fields")).toObject();
+        return decodeMap(fieldsObject);
+    }
+    if (valueObject.contains(QStringLiteral("arrayValue")))
+        return decodeArray(valueObject.value(QStringLiteral("arrayValue")).toObject());
+    return QVariant();
+}
+
+QVariantMap decodeDocument(const QJsonObject &documentObject)
+{
+    QVariantMap map;
+    const QString fullName = documentObject.value(QStringLiteral("name")).toString();
+    if (!fullName.isEmpty()) {
+        map.insert(QStringLiteral("name"), fullName);
+        map.insert(QStringLiteral("id"), fullName.section(QLatin1Char('/'), -1));
+    }
+    const QJsonObject fieldsObject = documentObject.value(QStringLiteral("fields")).toObject();
+    const QVariantMap decodedFields = decodeMap(fieldsObject);
+    for (auto it = decodedFields.constBegin(), end = decodedFields.constEnd(); it != end; ++it)
+        map.insert(it.key(), it.value());
+    return map;
+}
+
+} // namespace
+
 FirebaseFirestore::FirebaseFirestore(QObject *parent)
     : QObject(parent)
 {
@@ -212,6 +277,170 @@ void FirebaseFirestore::createDocument(const QString &collectionPath, const QVar
     });
 }
 
+void FirebaseFirestore::setDocument(const QString &documentPath, const QVariantMap &fields)
+{
+    if (!hasRequiredConfig()) {
+        const QString msg = QStringLiteral("FirebaseFirestore: missing projectId or apiKey/authToken.");
+        qWarning() << msg;
+        setLastError(msg);
+        return;
+    }
+
+    if (documentPath.trimmed().isEmpty()) {
+        const QString msg = QStringLiteral("FirebaseFirestore: document path cannot be empty.");
+        qWarning() << msg;
+        setLastError(msg);
+        return;
+    }
+
+    const QString baseUrl = QStringLiteral("https://firestore.googleapis.com/v1/projects/%1/databases/(default)/documents/%2")
+                                .arg(m_projectId, documentPath);
+    QUrl url(baseUrl);
+    if (!m_apiKey.isEmpty()) {
+        QUrlQuery query(url);
+        query.addQueryItem(QStringLiteral("key"), m_apiKey);
+        url.setQuery(query);
+    }
+
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+    if (!m_authToken.isEmpty())
+        request.setRawHeader("Authorization", QByteArrayLiteral("Bearer ") + m_authToken.toUtf8());
+
+    QJsonObject payload;
+    payload.insert(QStringLiteral("fields"), encodeMap(fields));
+    const QByteArray body = QJsonDocument(payload).toJson(QJsonDocument::Compact);
+
+    QNetworkReply *reply = network()->sendCustomRequest(request, QByteArrayLiteral("PATCH"), body);
+    QPointer<FirebaseFirestore> guard(this);
+    QObject::connect(reply, &QNetworkReply::finished, this, [this, guard, reply, documentPath]() {
+        if (!guard)
+            return;
+        const auto replyError = reply->error();
+        if (replyError != QNetworkReply::NoError) {
+            const QString errorString = QStringLiteral("FirebaseFirestore: setDocument failed: %1").arg(reply->errorString());
+            qWarning() << errorString;
+            const QByteArray responseBody = reply->readAll();
+            if (!responseBody.isEmpty())
+                qWarning() << "FirebaseFirestore response body:" << responseBody;
+            setLastError(errorString);
+        } else {
+            setLastError(QString());
+            emit documentWritten(documentPath);
+        }
+        reply->deleteLater();
+    });
+}
+
+void FirebaseFirestore::getDocument(const QString &documentPath)
+{
+    if (!hasRequiredConfig()) {
+        const QString msg = QStringLiteral("FirebaseFirestore: missing projectId or apiKey/authToken.");
+        qWarning() << msg;
+        setLastError(msg);
+        return;
+    }
+    if (documentPath.trimmed().isEmpty()) {
+        const QString msg = QStringLiteral("FirebaseFirestore: document path cannot be empty.");
+        qWarning() << msg;
+        setLastError(msg);
+        return;
+    }
+
+    const QString baseUrl = QStringLiteral("https://firestore.googleapis.com/v1/projects/%1/databases/(default)/documents/%2")
+                                .arg(m_projectId, documentPath);
+    QUrl url(baseUrl);
+    if (!m_apiKey.isEmpty()) {
+        QUrlQuery query(url);
+        query.addQueryItem(QStringLiteral("key"), m_apiKey);
+        url.setQuery(query);
+    }
+
+    QNetworkRequest request(url);
+    if (!m_authToken.isEmpty())
+        request.setRawHeader("Authorization", QByteArrayLiteral("Bearer ") + m_authToken.toUtf8());
+
+    QNetworkReply *reply = network()->get(request);
+    QPointer<FirebaseFirestore> guard(this);
+    QObject::connect(reply, &QNetworkReply::finished, this, [this, guard, reply, documentPath]() {
+        if (!guard)
+            return;
+        const auto replyError = reply->error();
+        if (replyError != QNetworkReply::NoError) {
+            const QString errorString = QStringLiteral("FirebaseFirestore: getDocument failed: %1").arg(reply->errorString());
+            qWarning() << errorString;
+            const QByteArray responseBody = reply->readAll();
+            if (!responseBody.isEmpty())
+                qWarning() << "FirebaseFirestore response body:" << responseBody;
+            setLastError(errorString);
+        } else {
+            const QByteArray responseBody = reply->readAll();
+            const QJsonDocument doc = QJsonDocument::fromJson(responseBody);
+            const QVariantMap fields = decodeDocument(doc.object());
+            setLastError(QString());
+            emit documentFetched(documentPath, fields);
+        }
+        reply->deleteLater();
+    });
+}
+
+void FirebaseFirestore::listDocuments(const QString &collectionPath)
+{
+    if (!hasRequiredConfig()) {
+        const QString msg = QStringLiteral("FirebaseFirestore: missing projectId or apiKey/authToken.");
+        qWarning() << msg;
+        setLastError(msg);
+        return;
+    }
+    if (collectionPath.trimmed().isEmpty()) {
+        const QString msg = QStringLiteral("FirebaseFirestore: collection path cannot be empty.");
+        qWarning() << msg;
+        setLastError(msg);
+        return;
+    }
+
+    const QString baseUrl = QStringLiteral("https://firestore.googleapis.com/v1/projects/%1/databases/(default)/documents/%2")
+                                .arg(m_projectId, collectionPath);
+    QUrl url(baseUrl);
+    if (!m_apiKey.isEmpty()) {
+        QUrlQuery query(url);
+        query.addQueryItem(QStringLiteral("key"), m_apiKey);
+        query.addQueryItem(QStringLiteral("pageSize"), QStringLiteral("100"));
+        url.setQuery(query);
+    }
+
+    QNetworkRequest request(url);
+    if (!m_authToken.isEmpty())
+        request.setRawHeader("Authorization", QByteArrayLiteral("Bearer ") + m_authToken.toUtf8());
+
+    QNetworkReply *reply = network()->get(request);
+    QPointer<FirebaseFirestore> guard(this);
+    QObject::connect(reply, &QNetworkReply::finished, this, [this, guard, reply, collectionPath]() {
+        if (!guard)
+            return;
+        const auto replyError = reply->error();
+        if (replyError != QNetworkReply::NoError) {
+            const QString errorString = QStringLiteral("FirebaseFirestore: listDocuments failed: %1").arg(reply->errorString());
+            qWarning() << errorString;
+            const QByteArray responseBody = reply->readAll();
+            if (!responseBody.isEmpty())
+                qWarning() << "FirebaseFirestore response body:" << responseBody;
+            setLastError(errorString);
+        } else {
+            const QByteArray responseBody = reply->readAll();
+            const QJsonDocument doc = QJsonDocument::fromJson(responseBody);
+            const QJsonArray documentsArray = doc.object().value(QStringLiteral("documents")).toArray();
+            QVariantList documents;
+            for (const QJsonValue &value : documentsArray) {
+                if (value.isObject())
+                    documents.append(decodeDocument(value.toObject()));
+            }
+            setLastError(QString());
+            emit documentsFetched(collectionPath, documents);
+        }
+        reply->deleteLater();
+    });
+}
 bool FirebaseFirestore::hasRequiredConfig() const
 {
     return !m_projectId.isEmpty() && (!m_apiKey.isEmpty() || !m_authToken.isEmpty());

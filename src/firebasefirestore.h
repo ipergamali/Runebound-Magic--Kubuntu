@@ -31,6 +31,9 @@ public:
     QString lastError() const;
 
     Q_INVOKABLE void createDocument(const QString &collectionPath, const QVariantMap &fields);
+    Q_INVOKABLE void setDocument(const QString &documentPath, const QVariantMap &fields);
+    Q_INVOKABLE void getDocument(const QString &documentPath);
+    Q_INVOKABLE void listDocuments(const QString &collectionPath);
 
 signals:
     void projectIdChanged();
@@ -39,6 +42,9 @@ signals:
     void readyChanged();
     void lastErrorChanged();
     void documentCreated(const QString &collectionPath, const QString &documentName);
+    void documentWritten(const QString &documentPath);
+    void documentFetched(const QString &documentPath, const QVariantMap &fields);
+    void documentsFetched(const QString &collectionPath, const QVariantList &documents);
 
 private:
     bool hasRequiredConfig() const;

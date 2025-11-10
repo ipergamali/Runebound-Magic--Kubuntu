@@ -40,17 +40,20 @@ ApplicationWindow {
     property int currentHeroPower: 0
     property string currentHeroElement: qsTr("Unknown")
     property bool inventoryOverlayVisible: false
+    property string currentUserId: ""
+    property var inventoryItems: []
     property var inventoryCategories: [
-        qsTr("Weapons"),
-        qsTr("Armor"),
-        qsTr("Shields"),
-        qsTr("Accessories"),
-        qsTr("Consumables"),
-        qsTr("Spells & Scrolls"),
-        qsTr("Runes & Gems"),
-        qsTr("Crafting Materials"),
-        qsTr("Quest Items"),
-        qsTr("Gold & Currency")
+        { title: qsTr("Champions"), type: "hero" },
+        { title: qsTr("Weapons"), type: "weapon" },
+        { title: qsTr("Armor"), type: "armor" },
+        { title: qsTr("Shields"), type: "shield" },
+        { title: qsTr("Accessories"), type: "accessory" },
+        { title: qsTr("Consumables"), type: "consumable" },
+        { title: qsTr("Spells & Scrolls"), type: "spell" },
+        { title: qsTr("Runes & Gems"), type: "rune" },
+        { title: qsTr("Crafting Materials"), type: "material" },
+        { title: qsTr("Quest Items"), type: "quest" },
+        { title: qsTr("Gold & Currency"), type: "currency" }
     ]
     property int inventorySlotsPerRow: 5
 
@@ -968,7 +971,7 @@ ApplicationWindow {
                         width: 140
                         height: heroSummaryPanel.height * 0.45
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: window.inventoryOverlayVisible = true
+                        onClicked: window.openInventoryOverlay()
                         hoverEnabled: true
 
                         Rectangle {
@@ -1243,10 +1246,13 @@ ApplicationWindow {
                                 delegate: Row {
                                     spacing: 18
                                     width: inventoryContent.width
-                                    property string categoryName: modelData
+                                    property var categoryData: modelData
+                                    property var categoryItems: window.itemsForCategory(categoryData)
+                                    property int slotCount: Math.max(window.inventorySlotsPerRow,
+                                                                     categoryItems.length)
 
                                     Text {
-                                        text: categoryName
+                                        text: categoryData.title
                                         font.pixelSize: 18
                                         font.family: signatureFont.name
                                         color: "#ffd166"
@@ -1256,14 +1262,48 @@ ApplicationWindow {
                                     Row {
                                         spacing: 12
                                         Repeater {
-                                            model: window.inventorySlotsPerRow
+                                            model: slotCount
                                             delegate: Rectangle {
-                                                width: 64
-                                                height: 64
+                                                width: 72
+                                                height: 72
                                                 radius: 8
-                                                color: "#b89c5a22"
+                                                property bool hasItem: index < categoryItems.length
+                                                color: hasItem ? "#d3b77c33" : "#b89c5a22"
                                                 border.color: "#c9ad6f"
                                                 border.width: 2
+
+                                                Column {
+                                                    anchors.centerIn: parent
+                                                    spacing: 4
+                                                    visible: hasItem
+
+                                                    Image {
+                                                        width: 40
+                                                        height: 40
+                                                        anchors.horizontalCenter: parent.horizontalCenter
+                                                        source: hasItem && categoryItems[index].icon
+                                                                ? (categoryItems[index].icon.startsWith("qrc:/")
+                                                                   ? categoryItems[index].icon
+                                                                   : "qrc:/RuneboundMagic/" + categoryItems[index].icon)
+                                                                : ""
+                                                        fillMode: Image.PreserveAspectFit
+                                                        visible: source && source.length
+                                                    }
+
+                                                    Text {
+                                                        text: hasItem
+                                                              ? (categoryItems[index].displayName
+                                                                 ? categoryItems[index].displayName
+                                                                 : categoryItems[index].itemId)
+                                                              : ""
+                                                        font.pixelSize: 11
+                                                        font.family: signatureFont.name
+                                                        color: "#f8eaff"
+                                                        horizontalAlignment: Text.AlignHCenter
+                                                        width: parent.width
+                                                        wrapMode: Text.WordWrap
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -1291,6 +1331,21 @@ ApplicationWindow {
             lobbyStatusIsError = true
             lobbyStatusMessage = firestore.lastError
             console.log("⚠️ Firestore error:", firestore.lastError)
+        }
+        function onDocumentsFetched(collectionPath, documents) {
+            if (!window.currentUserId || !window.currentUserId.length)
+                return
+            const expectedPath = "users/" + window.currentUserId + "/inventory"
+            if (collectionPath.indexOf(expectedPath) !== 0)
+                return
+            window.inventoryItems = documents.map(function(entry) { return entry })
+        }
+        function onDocumentWritten(documentPath) {
+            if (!window.currentUserId || !window.currentUserId.length)
+                return
+            const inventoryPrefix = "users/" + window.currentUserId + "/inventory/"
+            if (documentPath.indexOf(inventoryPrefix) === 0)
+                window.loadUserInventory()
         }
     }
 
@@ -1660,6 +1715,51 @@ ApplicationWindow {
         return heroCardModel.get(heroCarousel.currentIndex % heroCardModel.count)
     }
 
+    function normalizedUserId(name) {
+        if (!name || !name.length)
+            return ""
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+        if (slug.length > 0)
+            return slug
+        return "user-" + Math.floor(Date.now() / 1000)
+    }
+
+    function openInventoryOverlay() {
+        if (!currentUserId || !currentUserId.length) {
+            lobbyStatusIsError = true
+            lobbyStatusMessage = qsTr("⚠️ Save a hero before viewing inventory.")
+            return
+        }
+        inventoryOverlayVisible = true
+        loadUserInventory()
+    }
+
+    function loadUserInventory() {
+        if (!currentUserId || !currentUserId.length)
+            return
+        if (!firestore || typeof firestore.listDocuments !== "function")
+            return
+        firestore.listDocuments("users/" + currentUserId + "/inventory")
+    }
+
+    function itemsForCategory(category) {
+        if (!category || !inventoryItems || inventoryItems.length === 0)
+            return []
+        const expectedType = category.type ? category.type.toLowerCase() : ""
+        const expectedSlot = category.slot ? category.slot.toLowerCase() : ""
+        return inventoryItems.filter(function(item) {
+            if (!item)
+                return false
+            const itemType = item.type ? item.type.toLowerCase() : ""
+            const itemSlot = item.slot ? item.slot.toLowerCase() : ""
+            if (expectedType.length && itemType === expectedType)
+                return true
+            if (expectedSlot.length && itemSlot === expectedSlot)
+                return true
+            return false
+        })
+    }
+
     function updateHeroDetails() {
         if (!heroCarousel)
             return
@@ -1730,25 +1830,92 @@ ApplicationWindow {
             return
         }
 
+        const userId = normalizedUserId(enteredName)
+        currentUserId = userId
+        inventoryItems = []
+
         const heroStats = {
             health: hero.health !== undefined ? hero.health : 0,
             mana: hero.mana !== undefined ? hero.mana : 0,
             power: hero.power !== undefined ? hero.power : 0,
             element: hero.element !== undefined && hero.element.length ? hero.element : qsTr("Unknown")
         }
+        const selectedDifficulty = window.currentDifficulty || window.difficultyOptions[0]
+        const nowIso = new Date().toISOString()
 
         const payload = {
             userName: enteredName,
             heroId: hero.heroId,
             heroName: hero.name,
-            difficulty: window.currentDifficulty || window.difficultyOptions[0],
+            difficulty: selectedDifficulty,
             stats: heroStats,
-            savedAt: new Date().toISOString()
+            savedAt: nowIso
         }
 
         lobbyStatusIsError = false
         lobbyStatusMessage = qsTr("Saving selection...")
         firestore.createDocument("heroSelections", payload)
+        const heroInventoryEntry = {
+            itemId: hero.heroId,
+            displayName: hero.name,
+            acquiredAt: nowIso,
+            equipped: true,
+            slot: "hero",
+            type: "hero",
+            icon: hero.cardSource
+        }
+        const inventoryWrites = [{
+            documentId: hero.heroId,
+            payload: heroInventoryEntry
+        }]
+
+        if (hero.heroId === "ranger") {
+            inventoryWrites.push({
+                documentId: "weapon_crossbow_aurora",
+                payload: {
+                    itemId: "weapon_crossbow_aurora",
+                    displayName: qsTr("Aurora Repeater"),
+                    acquiredAt: nowIso,
+                    equipped: true,
+                    slot: "weapon",
+                    type: "weapon",
+                    quantity: 1,
+                    icon: "assets/images/weapons/crossbow.png"
+                }
+            })
+        }
+        if (hero.heroId === "mystical_priestess") {
+            inventoryWrites.push({
+                documentId: "weapon_rod_runewarden",
+                payload: {
+                    itemId: "weapon_rod_runewarden",
+                    displayName: qsTr("Runewarden Rod"),
+                    acquiredAt: nowIso,
+                    equipped: true,
+                    slot: "weapon",
+                    type: "weapon",
+                    quantity: 1,
+                    icon: "assets/images/weapons/rod.png"
+                }
+            })
+        }
+
+        const userDocument = {
+            profile: {
+                username: enteredName,
+                heroId: hero.heroId,
+                heroName: hero.name,
+                difficulty: selectedDifficulty,
+                createdAt: nowIso,
+                lastSelectionAt: nowIso,
+                stats: heroStats
+            }
+        }
+        firestore.setDocument("users/" + userId, userDocument)
+        for (let i = 0; i < inventoryWrites.length; ++i) {
+            const entry = inventoryWrites[i]
+            firestore.setDocument("users/" + userId + "/inventory/" + entry.documentId, entry.payload)
+        }
         console.log("✅ Selected hero:", hero.name, "for player:", enteredName)
         showHeroSummary()
     }
