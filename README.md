@@ -13,6 +13,7 @@ This repository also contains tooling for seeding Firestore with the sample inve
 - Use this file as a reference in QML or for seeding Firestore. Modify or extend it to match production content.
 - `data/armour_items.json` includes derived armor items based on the images under `assets/images/Armour/`. Import it the same way as the main schema to seed armor templates.
 - `data/gear_items.json` captures weapons, shields, and accessory assets under `assets/images/{weapons,shield,Accessories}`.
+- `data/tiles.json` mirrors the match-3 tile art in `assets/images/tiles/` and seeds the `tiles` collection. Each entry includes the in-game description plus the asset path so the desktop client can stay in sync with Firestore.
 
 ## Firestore Import Script
 
@@ -27,9 +28,17 @@ python scripts/import_inventory.py \
     --schema data/inventory_schema.json
 ```
 
+To import just the match-3 tile definitions:
+
+```
+python scripts/import_inventory.py \
+    --credentials path/to/serviceAccountKey.json \
+    --schema data/tiles.json
+```
+
 Notes:
 - The `--schema` flag is optional; by default it points to the file in `data/`.
-- The script writes into collections: `items`, `recipes`, `metadata/schema`, and `users/{userId}/(inventory, equipment)`.
+- The script writes into collections: `items`, `recipes`, `tiles`, `metadata/schema`, and `users/{userId}/(inventory, equipment)`—only the sections present in the JSON are touched.
 - Each run overwrites documents with the same IDs; adjust the script if you need merge-only behavior.
 
 ## Development Quickstart

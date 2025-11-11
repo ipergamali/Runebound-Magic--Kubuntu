@@ -1,0 +1,46 @@
+{
+  "tiles": {
+    "red": {
+      "name": "Red Gem",
+      "element": "Fire",
+      "matchValue": 4,
+      "effect": "Charges fire abilities and increases hero attack.",
+      "image": "assets/images/tiles/red_gem.png"
+    },
+    "blue": {
+      "name": "Blue Gem",
+      "element": "Water",
+      "matchValue": 4,
+      "effect": "Restores mana and empowers frost spells.",
+      "image": "assets/images/tiles/blue_gem.png"
+    },
+    "green": {
+      "name": "Green Gem",
+      "element": "Nature",
+      "matchValue": 4,
+      "effect": "Heals the hero and boosts regenerative effects.",
+      "image": "assets/images/tiles/green_gem.png"
+    },
+    "turquoise": {
+      "name": "Turquoise Gem",
+      "element": "Storm",
+      "matchValue": 4,
+      "effect": "Generates shield points and triggers chain lightning.",
+      "image": "assets/images/tiles/turquoise_gem.png"
+    },
+    "skull": {
+      "name": "Skull",
+      "element": "Curse",
+      "matchValue": 0,
+      "effect": "Deals direct damage to the opponent when matched.",
+      "damage": 12,
+      "image": "assets/images/tiles/skull.png"
+    }
+  },
+  "metadata": {
+    "category": "Match-3 Tiles",
+    "source": "assets/images/tiles",
+    "createdBy": "Codex",
+    "version": "1.0.0"
+  }
+}

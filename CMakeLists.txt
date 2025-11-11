@@ -24,10 +24,12 @@ qt_add_qml_module(RuneboundMagicApp
         assets/images/heroes/black_wizard.png
         assets/images/heroes/peiestsess.png
         assets/images/lobby/Game_Lobby.png
+        assets/images/Board/board.png
         assets/images/heroes_cards/mage.png
         assets/images/heroes_cards/warrior.png
         assets/images/heroes_cards/ranger.png
         assets/images/heroes_cards/mystical_priestess.png
+        "assets/images/heroes_cards/black _magician.png"
         assets/images/Armour/boots/boots.png
         assets/images/Armour/boots/boots_b.png
         assets/images/Armour/boots/buttos_c.png
@@ -55,6 +57,8 @@ qt_add_qml_module(RuneboundMagicApp
         assets/images/tiles/blue_gem.png
         assets/images/tiles/turquoise_gem.png
         assets/images/tiles/green_gem.png
+        assets/images/tiles/skull.png
+        assets/images/circle.png
         assets/sounds/1.mp3
         assets/sounds/2.mp3
         assets/sounds/3.mp3

@@ -1,0 +1,9 @@
+{
+  "tiles": [
+    {"id": "red", "name": "Red Gem", "image": "assets/images/tiles/red_gem.png"},
+    {"id": "blue", "name": "Blue Gem", "image": "assets/images/tiles/blue_gem.png"},
+    {"id": "green", "name": "Green Gem", "image": "assets/images/tiles/green_gem.png"},
+    {"id": "turquoise", "name": "Turquoise Gem", "image": "assets/images/tiles/turquoise_gem.png"},
+    {"id": "skull", "name": "Skull", "image": "assets/images/tiles/skull.png"}
+  ]
+}

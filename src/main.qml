@@ -42,6 +42,9 @@ ApplicationWindow {
     property bool inventoryOverlayVisible: false
     property string currentUserId: ""
     property var inventoryItems: []
+    property bool savedHeroesOverlayVisible: false
+    property bool savedUsersLoading: false
+    property var savedUserList: []
     property var inventoryCategories: [
         { title: qsTr("Champions"), type: "hero" },
         { title: qsTr("Weapons"), type: "weapon" },
@@ -56,6 +59,36 @@ ApplicationWindow {
         { title: qsTr("Gold & Currency"), type: "currency" }
     ]
     property int inventorySlotsPerRow: 5
+    property int match3Rows: 8
+    property int match3Columns: 5
+    property real match3BoardWidthPx: 1000
+    property real match3BoardHeightPx: 1500
+    property real match3BoardPaddingPx: 50
+    property string match3OpponentCardSource: "qrc:/RuneboundMagic/assets/images/heroes_cards/black _magician.png"
+    property var match3Grid: []
+    property bool match3Busy: false
+    property int match3SelectedRow: -1
+    property int match3SelectedColumn: -1
+    property int match3HeroScore: 0
+    property int match3OpponentScore: 0
+    property int match3HeroHealth: 0
+    property int match3HeroMaxHealth: 0
+    property int match3OpponentHealth: 0
+    property int match3OpponentMaxHealth: 120
+    property int match3SkullDamage: 12
+    property bool match3BattleOver: false
+    property bool match3OpponentAutoPlay: true
+    property bool match3OpponentPendingMove: false
+    property bool match3CurrentCascadeIsOpponent: false
+    property string match3StatusMessage: ""
+    property bool battleBoardReady: false
+    property var match3TileTypes: [
+        { id: "red", source: "qrc:/RuneboundMagic/assets/images/tiles/red_gem.png" },
+        { id: "blue", source: "qrc:/RuneboundMagic/assets/images/tiles/blue_gem.png" },
+        { id: "green", source: "qrc:/RuneboundMagic/assets/images/tiles/green_gem.png" },
+        { id: "turquoise", source: "qrc:/RuneboundMagic/assets/images/tiles/turquoise_gem.png" },
+        { id: "skull", source: "qrc:/RuneboundMagic/assets/images/tiles/skull.png" }
+    ]
 
     ListModel {
         id: heroCardModel
@@ -99,6 +132,10 @@ ApplicationWindow {
             power: 72
             element: qsTr("Spirit")
         }
+    }
+
+    ListModel {
+        id: match3TileModel
     }
 
     FontLoader {
@@ -813,7 +850,7 @@ ApplicationWindow {
             id: heroNameEntry
             anchors.horizontalCenter: lobbyBackdrop.horizontalCenter
             anchors.bottom: lobbyNavigationRow.top
-            anchors.bottomMargin: lobbyBackdrop.height * 0.06
+            anchors.bottomMargin: lobbyBackdrop.height * 0.02
             width: lobbyBackdrop.width * 0.5
             spacing: 12
             z: 2
@@ -830,6 +867,7 @@ ApplicationWindow {
             TextField {
                 id: heroNameField
                 width: parent.width
+                height: 44
                 text: window.heroNameInput
                 onTextChanged: {
                     window.heroNameInput = text
@@ -837,14 +875,14 @@ ApplicationWindow {
                     window.lobbyStatusIsError = false
                 }
                 placeholderText: qsTr("Type the name of your hero")
-                font.pixelSize: 20
+                font.pixelSize: 18
                 font.family: signatureFont.name
                 color: "#f8eaff"
                 horizontalAlignment: Text.AlignHCenter
                 focusPolicy: Qt.StrongFocus
                 selectByMouse: true
                 cursorVisible: true
-                padding: 12
+                padding: 8
                 inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
                 background: Rectangle {
                     radius: 22
@@ -852,6 +890,29 @@ ApplicationWindow {
                     border.color: "#7ed1c2"
                     border.width: 2
                 }
+            }
+
+            Button {
+                id: savedHeroesButton
+                text: qsTr("Saved Heroes")
+                width: parent.width
+                height: 48
+                focusPolicy: Qt.NoFocus
+                background: Rectangle {
+                    radius: 22
+                    color: "#1f2d35"
+                    border.color: "#7ed1c2"
+                    border.width: 2
+                }
+                contentItem: Text {
+                    text: savedHeroesButton.text
+                    font.pixelSize: 20
+                    font.family: signatureFont.name
+                    color: "#b8f0e5"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                onClicked: openSavedHeroesOverlay()
             }
 
             Text {
@@ -1156,8 +1217,302 @@ ApplicationWindow {
                         onClicked: startBattle()
                     }
                 }
+        }
+    }
+    }
+
+    Item {
+        id: battleSceneLayer
+        anchors.fill: parent
+        visible: sceneIndex === 7
+        opacity: visible ? 1.0 : 0.0
+        enabled: visible
+        z: 4
+
+        Image {
+            anchors.fill: parent
+            source: "qrc:/RuneboundMagic/assets/images/intro/MysticalTempleRuins.png"
+            fillMode: Image.PreserveAspectCrop
+            smooth: true
+            opacity: 0.35
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            color: "#04030ad9"
+        }
+
+        Button {
+            id: exitBattleButton
+            anchors.left: parent.left
+            anchors.leftMargin: 32
+            anchors.top: parent.top
+            anchors.topMargin: 32
+            text: qsTr("Back to Summary")
+            width: 180
+            height: 48
+            focusPolicy: Qt.NoFocus
+            background: Rectangle {
+                radius: 24
+                color: "#1f2d35"
+                border.color: "#7ed1c2"
+                border.width: 2
+            }
+            contentItem: Text {
+                text: exitBattleButton.text
+                font.pixelSize: 18
+                font.family: signatureFont.name
+                color: "#b8f0e5"
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+            onClicked: showHeroSummary()
+        }
+
+        Row {
+            id: battleDisplayRow
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenterOffset: parent.height * 0.02
+            spacing: Math.min(parent.width * 0.04, 60)
+            z: 2
+
+            Item {
+                id: battleHeroCard
+                width: boardContainer.width * 0.65
+                height: width * 1.45
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 18
+                    color: "#00000066"
+                    border.color: "#d8b6ff66"
+                    border.width: 1
+                }
+                Image {
+                    anchors.fill: parent
+                    anchors.margins: 6
+                    source: selectedHeroData && selectedHeroData.cardSource ? selectedHeroData.cardSource : ""
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                }
+            }
+
+            Item {
+                id: boardContainer
+                property real boardAspect: window.match3BoardHeightPx / window.match3BoardWidthPx
+                width: Math.min(battleSceneLayer.width * 0.42, battleSceneLayer.height * 0.8 / boardAspect)
+                height: width * boardAspect
+                property real boardScale: width / window.match3BoardWidthPx
+
+                Image {
+                    id: battleBoardImage
+                    anchors.centerIn: parent
+                    width: parent.width
+                    height: parent.height
+                    source: "qrc:/RuneboundMagic/assets/images/Board/board.png"
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                }
+
+                Item {
+                    id: tileArea
+                    anchors.centerIn: parent
+                    property real usableWidth: (window.match3BoardWidthPx - window.match3BoardPaddingPx * 2) * boardContainer.boardScale
+                    property real usableHeight: (window.match3BoardHeightPx - window.match3BoardPaddingPx * 2) * boardContainer.boardScale
+                    width: usableWidth
+                    height: usableHeight
+                    clip: true
+                    z: 2
+                    visible: battleBoardReady
+
+                    Repeater {
+                        model: match3TileModel
+                        delegate: Item {
+                            property int cellRow: tileRow
+                            property int cellColumn: tileColumn
+                            required property int tileRow
+                            required property int tileColumn
+                            required property string tileSource
+                            width: tileArea.width / window.match3Columns
+                            height: tileArea.height / window.match3Rows
+                            x: tileColumn * width
+                            y: tileRow * height
+                            Behavior on x { NumberAnimation { duration: 150; easing.type: Easing.InOutQuad } }
+                            Behavior on y { NumberAnimation { duration: 150; easing.type: Easing.InOutQuad } }
+
+                            Rectangle {
+                                anchors.fill: parent
+                                color: "#00000055"
+                                border.color: "#00000088"
+                                border.width: 1
+                                radius: 6
+                            }
+
+                            Image {
+                                anchors.centerIn: parent
+                                width: parent.width * 0.9
+                                height: width
+                                source: "qrc:/RuneboundMagic/assets/images/circle.png"
+                                visible: window.match3SelectedRow === cellRow && window.match3SelectedColumn === cellColumn || tileInputArea.pressed
+                                opacity: visible ? 0.95 : 0.0
+                                Behavior on opacity { NumberAnimation { duration: 120; easing.type: Easing.InOutQuad } }
+                                z: 1
+                            }
+
+                            Image {
+                                anchors.fill: parent
+                                source: tileSource
+                                fillMode: Image.PreserveAspectFit
+                                smooth: true
+                                visible: tileSource && tileSource.length
+                            }
+
+                            MouseArea {
+                                id: tileInputArea
+                                anchors.fill: parent
+                                enabled: battleBoardReady && !window.match3Busy && !window.match3BattleOver
+                                cursorShape: Qt.PointingHandCursor
+                                property real pressX: 0
+                                property real pressY: 0
+                                property bool dragCandidate: false
+                                readonly property real dragThreshold: 18
+                                onPressed: function(mouse) {
+                                    pressX = mouse.x
+                                    pressY = mouse.y
+                                    dragCandidate = false
+                                }
+                                onPositionChanged: function(mouse) {
+                                    if (!enabled)
+                                        return
+                                    const dx = mouse.x - pressX
+                                    const dy = mouse.y - pressY
+                                    dragCandidate = Math.abs(dx) > dragThreshold || Math.abs(dy) > dragThreshold
+                                }
+                                onReleased: function(mouse) {
+                                    if (!enabled)
+                                        return
+                                    const dx = mouse.x - pressX
+                                    const dy = mouse.y - pressY
+                                    if (Math.abs(dx) > dragThreshold || Math.abs(dy) > dragThreshold) {
+                                        window.handleMatch3Drag(cellRow, cellColumn, dx, dy)
+                                    } else {
+                                        window.handleMatch3TileClick(cellRow, cellColumn)
+                                    }
+                                }
+                                onCanceled: {
+                                    window.handleMatch3TileClick(cellRow, cellColumn)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: qsTr("Preparing battle...")
+                    font.pixelSize: 22
+                    font.family: signatureFont.name
+                    color: "#f8eaff"
+                    visible: !battleBoardReady
+                }
+            }
+
+            Item {
+                id: battleOpponentCard
+                width: boardContainer.width * 0.65
+                height: width * 1.45
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 18
+                    color: "#00000066"
+                    border.color: "#ffd16666"
+                    border.width: 1
+                }
+                Image {
+                    anchors.fill: parent
+                    anchors.margins: 6
+                    source: window.match3OpponentCardSource
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                }
             }
         }
+
+        Row {
+            id: battleStatsRow
+            anchors.top: battleDisplayRow.bottom
+            anchors.topMargin: 16
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: 60
+            z: 2
+
+            Column {
+                spacing: 4
+                Text {
+                    text: selectedHeroName && selectedHeroName.length
+                          ? qsTr("Hero: %1").arg(selectedHeroName)
+                          : qsTr("Hero: --")
+                    font.pixelSize: 18
+                    font.family: signatureFont.name
+                    color: "#f8eaff"
+                }
+                Text {
+                    text: qsTr("Difficulty: %1").arg(window.currentDifficulty)
+                    font.pixelSize: 16
+                    font.family: signatureFont.name
+                    color: "#ffd166"
+                }
+            }
+
+            Column {
+                spacing: 4
+                Text {
+                    text: qsTr("Hero Score: %1").arg(window.match3HeroScore)
+                    font.pixelSize: 18
+                    font.family: signatureFont.name
+                    color: "#b8f0e5"
+                }
+                Text {
+                    text: qsTr("Hero Health: %1 / %2").arg(window.match3HeroHealth).arg(window.match3HeroMaxHealth)
+                    font.pixelSize: 16
+                    font.family: signatureFont.name
+                    color: "#ffb3a7"
+                }
+            }
+
+            Column {
+                spacing: 4
+                Text {
+                    text: qsTr("Magician Score: %1").arg(window.match3OpponentScore)
+                    font.pixelSize: 18
+                    font.family: signatureFont.name
+                    color: "#b8f0e5"
+                }
+                Text {
+                    text: qsTr("Magician Health: %1 / %2").arg(window.match3OpponentHealth).arg(window.match3OpponentMaxHealth)
+                    font.pixelSize: 16
+                    font.family: signatureFont.name
+                    color: "#ffd166"
+                }
+            }
+        }
+
+        Text {
+            anchors.top: battleStatsRow.bottom
+            anchors.topMargin: 8
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: window.match3StatusMessage
+            font.pixelSize: 16
+            font.family: signatureFont.name
+            color: "#f8eaff"
+            opacity: window.match3StatusMessage.length ? 1.0 : 0.0
+        }
+    }
+
+    Item {
+        id: overlayLayer
+        anchors.fill: parent
+        z: 6
 
         Item {
             id: inventoryOverlay
@@ -1314,6 +1669,205 @@ ApplicationWindow {
                 }
             }
         }
+
+        Item {
+            id: savedHeroesOverlay
+            anchors.fill: parent
+            visible: savedHeroesOverlayVisible
+            opacity: visible ? 1.0 : 0.0
+            enabled: visible
+            z: 8
+
+        Rectangle {
+            anchors.fill: parent
+            color: "#020107d8"
+        }
+
+        Rectangle {
+            id: savedHeroesPanel
+            anchors.centerIn: parent
+            width: parent.width * 0.7
+            height: parent.height * 0.75
+            radius: 24
+            color: "#141022"
+            border.color: "#7ed1c2"
+            border.width: 2
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: 28
+                spacing: 16
+
+                Row {
+                    width: parent.width
+                    spacing: 16
+
+                    Text {
+                        text: qsTr("Saved Heroes")
+                        font.pixelSize: 28
+                        font.family: signatureFont.name
+                        color: "#f8eaff"
+                        width: parent.width * 0.7
+                    }
+
+                    Button {
+                        id: savedHeroesCloseButton
+                        text: qsTr("Close")
+                        width: 120
+                        height: 44
+                        focusPolicy: Qt.NoFocus
+                        background: Rectangle {
+                            radius: 20
+                            color: "#1f2d35"
+                            border.color: "#7ed1c2"
+                            border.width: 2
+                        }
+                        contentItem: Text {
+                            text: savedHeroesCloseButton.text
+                            font.pixelSize: 18
+                            font.family: signatureFont.name
+                            color: "#b8f0e5"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        onClicked: closeSavedHeroesOverlay()
+                    }
+                }
+
+                Loader {
+                    active: savedUsersLoading
+                    sourceComponent: Item {
+                        width: parent ? parent.width : 0
+                        height: 40
+                        Text {
+                            anchors.centerIn: parent
+                            text: qsTr("Loading...")
+                            font.pixelSize: 18
+                            font.family: signatureFont.name
+                            color: "#ffd166"
+                        }
+                    }
+                }
+
+                Flickable {
+                    id: savedHeroesFlick
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.top: parent.top
+                    anchors.topMargin: 96
+                    contentWidth: width
+                    contentHeight: savedHeroesColumn.implicitHeight
+                    clip: true
+
+                    Column {
+                        id: savedHeroesColumn
+                        width: savedHeroesFlick.width
+                        spacing: 12
+
+                        Repeater {
+                            model: window.savedUserList
+                            delegate: Rectangle {
+                                width: savedHeroesColumn.width
+                                height: 120
+                                radius: 18
+                                color: "#1d1430"
+                                border.color: "#d8b6ff"
+                                border.width: 1
+
+                                Row {
+                                    anchors.fill: parent
+                                    anchors.margins: 16
+                                    spacing: 16
+
+                                    Image {
+                                        width: 88
+                                        height: 88
+                                        fillMode: Image.PreserveAspectFit
+                                        source: {
+                                            const heroId = (modelData.profile && modelData.profile.heroId) ? modelData.profile.heroId : ""
+                                            const hero = window.heroDataById(heroId)
+                                            return hero && hero.cardSource ? hero.cardSource : ""
+                                        }
+                                    }
+
+                                    Column {
+                                        width: parent.width * 0.6
+                                        spacing: 6
+
+                                        Text {
+                                            text: (modelData.profile && modelData.profile.heroName)
+                                                  ? modelData.profile.heroName
+                                                  : modelData.profile && modelData.profile.heroId
+                                                    ? modelData.profile.heroId
+                                                    : qsTr("Unknown Hero")
+                                            font.pixelSize: 22
+                                            font.family: signatureFont.name
+                                            color: "#f8eaff"
+                                        }
+
+                                        Text {
+                                            text: modelData.profile && modelData.profile.username
+                                                  ? qsTr("Player: %1").arg(modelData.profile.username)
+                                                  : ""
+                                            font.pixelSize: 16
+                                            font.family: signatureFont.name
+                                            color: "#b8f0e5"
+                                        }
+
+                                        Text {
+                                            text: modelData.profile && modelData.profile.difficulty
+                                                  ? qsTr("Difficulty: %1").arg(modelData.profile.difficulty)
+                                                  : ""
+                                            font.pixelSize: 16
+                                            font.family: signatureFont.name
+                                            color: "#ffd166"
+                                        }
+                                    }
+
+                                    Button {
+                                        id: loadSavedHeroButton
+                                        text: qsTr("Load")
+                                        width: 110
+                                        height: 44
+                                        focusPolicy: Qt.NoFocus
+                                        background: Rectangle {
+                                            radius: 20
+                                            color: "#513860"
+                                            border.color: "#d8b6ff"
+                                            border.width: 2
+                                        }
+                                        contentItem: Text {
+                                            text: loadSavedHeroButton.text
+                                            font.pixelSize: 18
+                                            font.family: signatureFont.name
+                                            color: "#f8eaff"
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                        }
+                                        onClicked: applySavedHero(modelData)
+                                    }
+                                }
+                            }
+                        }
+
+                        Item {
+                            width: 1
+                            height: window.savedUserList.length === 0 && !savedUsersLoading ? 80 : 0
+                            visible: window.savedUserList.length === 0 && !savedUsersLoading
+                            Text {
+                                anchors.centerIn: parent
+                                text: qsTr("No saved heroes found.")
+                                font.pixelSize: 18
+                                font.family: signatureFont.name
+                                color: "#b8f0e5"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     }
 
     Connections {
@@ -1331,8 +1885,15 @@ ApplicationWindow {
             lobbyStatusIsError = true
             lobbyStatusMessage = firestore.lastError
             console.log("⚠️ Firestore error:", firestore.lastError)
+            if (savedHeroesOverlayVisible)
+                savedUsersLoading = false
         }
         function onDocumentsFetched(collectionPath, documents) {
+            if (collectionPath === "users") {
+                window.savedUsersLoading = false
+                window.savedUserList = documents.map(function(entry) { return entry })
+                return
+            }
             if (!window.currentUserId || !window.currentUserId.length)
                 return
             const expectedPath = "users/" + window.currentUserId + "/inventory"
@@ -1709,10 +2270,48 @@ ApplicationWindow {
         showFinaleScene()
     }
 
+    function heroDataByIndex(index) {
+        if (index < 0 || !heroCardModel || heroCardModel.count === 0)
+            return null
+        return heroCardModel.get(index % heroCardModel.count)
+    }
+
     function currentHeroData() {
         if (!heroCarousel || heroCardModel.count === 0)
             return null
         return heroCardModel.get(heroCarousel.currentIndex % heroCardModel.count)
+    }
+
+    function heroDataById(heroId) {
+        if (!heroId || !heroCardModel)
+            return null
+        for (let i = 0; i < heroCardModel.count; ++i) {
+            const hero = heroCardModel.get(i)
+            if (hero.heroId === heroId)
+                return hero
+        }
+        return null
+    }
+
+    function heroIndexById(heroId) {
+        if (!heroId || !heroCardModel)
+            return -1
+        for (let i = 0; i < heroCardModel.count; ++i) {
+            if (heroCardModel.get(i).heroId === heroId)
+                return i
+        }
+        return -1
+    }
+
+    function difficultyIndexForName(name) {
+        if (!name || !difficultyOptions || !difficultyOptions.length)
+            return -1
+        const lower = name.toLowerCase()
+        for (let i = 0; i < difficultyOptions.length; ++i) {
+            if (difficultyOptions[i].toLowerCase() === lower)
+                return i
+        }
+        return -1
     }
 
     function normalizedUserId(name) {
@@ -1732,6 +2331,23 @@ ApplicationWindow {
         }
         inventoryOverlayVisible = true
         loadUserInventory()
+    }
+
+    function openSavedHeroesOverlay() {
+        if (!firestore || typeof firestore.listDocuments !== "function" || !firestore.ready) {
+            lobbyStatusIsError = true
+            lobbyStatusMessage = qsTr("⚠️ Database service is not available.")
+            return
+        }
+        savedHeroesOverlayVisible = true
+        savedUsersLoading = true
+        savedUserList = []
+        firestore.listDocuments("users")
+    }
+
+    function closeSavedHeroesOverlay() {
+        savedHeroesOverlayVisible = false
+        savedUsersLoading = false
     }
 
     function loadUserInventory() {
@@ -1758,6 +2374,35 @@ ApplicationWindow {
                 return true
             return false
         })
+    }
+
+    function applySavedHero(userDoc) {
+        if (!userDoc)
+            return
+        const profile = userDoc.profile || {}
+        const heroId = profile.heroId || userDoc.heroId || ""
+        const username = profile.username || userDoc.userName || ""
+        if (username && username.length)
+            heroNameInput = username
+        const docId = userDoc.id || normalizedUserId(username)
+        if (docId && docId.length)
+            currentUserId = docId
+        const difficultyName = profile.difficulty || ""
+        const difficultyIdx = difficultyIndexForName(difficultyName)
+        if (difficultyIdx >= 0)
+            difficultyIndex = difficultyIdx
+        savedHeroesOverlayVisible = false
+        savedUsersLoading = false
+        const heroIndex = heroIndexById(heroId)
+        if (heroIndex >= 0) {
+            heroCarousel.currentIndex = heroIndex
+            currentHeroIndex = heroIndex
+            updateHeroDetails()
+        }
+        inventoryItems = []
+        loadUserInventory()
+        lobbyStatusIsError = false
+        lobbyStatusMessage = qsTr("Loaded hero %1").arg(profile.heroName || heroId || username)
     }
 
     function updateHeroDetails() {
@@ -1937,13 +2582,411 @@ ApplicationWindow {
         returnToFinale()
     }
 
+    function match3ModelIndex(row, column) {
+        return row * match3Columns + column
+    }
+
+    function match3TileAt(row, column) {
+        if (!match3Grid || row < 0 || row >= match3Rows || column < 0 || column >= match3Columns)
+            return null
+        if (!match3Grid[row])
+            return null
+        return match3Grid[row][column] || null
+    }
+
+    function setMatch3Tile(row, column, tile) {
+        if (!match3Grid[row])
+            match3Grid[row] = []
+        match3Grid[row][column] = tile
+    }
+
+    function createRandomMatch3Tile(row, column, avoidTypes) {
+        if (!match3TileTypes || match3TileTypes.length === 0)
+            return null
+        const maxAttempts = Math.max(match3TileTypes.length * 3, 10)
+        let selected = null
+        for (let attempt = 0; attempt < maxAttempts; ++attempt) {
+            const candidate = match3TileTypes[Math.floor(Math.random() * match3TileTypes.length)]
+            if (!avoidTypes || avoidTypes.indexOf(candidate.id) === -1) {
+                selected = candidate
+                break
+            }
+        }
+        if (!selected)
+            selected = match3TileTypes[Math.floor(Math.random() * match3TileTypes.length)]
+        return {
+            typeId: selected.id,
+            source: selected.source,
+            key: selected.id + "_" + Date.now() + "_" + Math.random().toString(36).slice(2)
+        }
+    }
+
+    function syncMatch3Model() {
+        const totalCells = match3Rows * match3Columns
+        if (match3TileModel.count !== totalCells) {
+            match3TileModel.clear()
+            for (let row = 0; row < match3Rows; ++row) {
+                for (let column = 0; column < match3Columns; ++column) {
+                    const tile = match3TileAt(row, column)
+                    match3TileModel.append({
+                        tileRow: row,
+                        tileColumn: column,
+                        tileType: tile ? tile.typeId : "",
+                        tileSource: tile ? tile.source : "",
+                        tileKey: tile ? tile.key : ""
+                    })
+                }
+            }
+        } else {
+            let index = 0
+            for (let row = 0; row < match3Rows; ++row) {
+                for (let column = 0; column < match3Columns; ++column) {
+                    const tile = match3TileAt(row, column)
+                    match3TileModel.set(index, {
+                        tileRow: row,
+                        tileColumn: column,
+                        tileType: tile ? tile.typeId : "",
+                        tileSource: tile ? tile.source : "",
+                        tileKey: tile ? tile.key : ""
+                    })
+                    ++index
+                }
+            }
+        }
+        battleBoardReady = match3TileModel.count === totalCells
+    }
+
+    function clearMatch3Selection() {
+        match3SelectedRow = -1
+        match3SelectedColumn = -1
+    }
+
+    function match3TilesAreAdjacent(row1, column1, row2, column2) {
+        return Math.abs(row1 - row2) + Math.abs(column1 - column2) === 1
+    }
+
+    function handleMatch3TileClick(row, column) {
+        if (!battleBoardReady || match3Busy)
+            return
+        if (match3SelectedRow === -1 || match3SelectedColumn === -1) {
+            match3SelectedRow = row
+            match3SelectedColumn = column
+            return
+        }
+        if (match3SelectedRow === row && match3SelectedColumn === column) {
+            clearMatch3Selection()
+            return
+        }
+        if (match3TilesAreAdjacent(match3SelectedRow, match3SelectedColumn, row, column)) {
+            attemptMatch3Swap(match3SelectedRow, match3SelectedColumn, row, column)
+        } else {
+            match3SelectedRow = row
+            match3SelectedColumn = column
+        }
+    }
+
+    function attemptMatch3Swap(row1, column1, row2, column2, initiatedByOpponent) {
+        const opponentMove = initiatedByOpponent === true
+        if (!battleBoardReady || match3Busy)
+            return false
+        if (row2 < 0 || row2 >= match3Rows || column2 < 0 || column2 >= match3Columns)
+            return false
+        if (!match3TilesAreAdjacent(row1, column1, row2, column2))
+            return false
+        match3Busy = true
+        swapMatch3Tiles(row1, column1, row2, column2)
+        syncMatch3Model()
+        const sourceRow = row1
+        const sourceColumn = column1
+        const targetRow = row2
+        const targetColumn = column2
+        const immediateMatches = findAllMatch3Matches()
+        if (!immediateMatches.length) {
+            swapMatch3Tiles(sourceRow, sourceColumn, targetRow, targetColumn)
+            syncMatch3Model()
+            match3Busy = false
+            clearMatch3Selection()
+            if (!opponentMove)
+                match3StatusMessage = qsTr("No match. Try a different swap.")
+            return false
+        }
+        match3CurrentCascadeIsOpponent = opponentMove
+        if (!opponentMove)
+            match3OpponentPendingMove = true
+        clearMatch3Selection()
+        const pendingMatches = immediateMatches.slice()
+        Qt.callLater(function() {
+            resolveMatch3Cascade(pendingMatches)
+        })
+        return true
+    }
+
+    function handleMatch3Drag(row, column, deltaX, deltaY) {
+        if (!battleBoardReady || match3Busy)
+            return
+        const minDistance = 18
+        const absX = Math.abs(deltaX)
+        const absY = Math.abs(deltaY)
+        if (absX < minDistance && absY < minDistance) {
+            handleMatch3TileClick(row, column)
+            return
+        }
+        let targetRow = row
+        let targetColumn = column
+        if (absX > absY)
+            targetColumn += deltaX > 0 ? 1 : -1
+        else
+            targetRow += deltaY > 0 ? 1 : -1
+        attemptMatch3Swap(row, column, targetRow, targetColumn)
+    }
+
+    function autoplayOpponentMove() {
+        if (!match3OpponentAutoPlay || match3BattleOver || sceneIndex !== 7)
+            return
+        if (!battleBoardReady || match3Busy)
+            return
+        match3StatusMessage = qsTr("The Black Magician strikes back!")
+        let attempts = match3Rows * match3Columns * 4
+        while (attempts-- > 0) {
+            const row = Math.floor(Math.random() * match3Rows)
+            const column = Math.floor(Math.random() * match3Columns)
+            const directions = [
+                { dr: 1, dc: 0 },
+                { dr: -1, dc: 0 },
+                { dr: 0, dc: 1 },
+                { dr: 0, dc: -1 }
+            ]
+            const dir = directions[Math.floor(Math.random() * directions.length)]
+            const targetRow = row + dir.dr
+            const targetColumn = column + dir.dc
+            if (attemptMatch3Swap(row, column, targetRow, targetColumn, true))
+                return
+        }
+    }
+
+    function applySkullDamage(skullCount, initiatedByOpponent) {
+        if (skullCount <= 0)
+            return
+        const damage = skullCount * match3SkullDamage
+        match3HeroHealth = Math.max(0, match3HeroHealth - damage)
+        match3StatusMessage = initiatedByOpponent
+                              ? qsTr("The Black Magician's skulls hit you for %1 damage!").arg(damage)
+                              : qsTr("Skulls explode! You take %1 damage.").arg(damage)
+        if (match3HeroHealth <= 0)
+            endMatch3Battle(false)
+    }
+
+    function endMatch3Battle(victory) {
+        match3BattleOver = true
+        match3Busy = false
+        match3StatusMessage = victory ? qsTr("Victory!") : qsTr("Defeated by the Black Magician.")
+    }
+
+    function swapMatch3Tiles(row1, column1, row2, column2) {
+        const temp = match3TileAt(row1, column1)
+        setMatch3Tile(row1, column1, match3TileAt(row2, column2))
+        setMatch3Tile(row2, column2, temp)
+    }
+
+    function findAllMatch3Matches() {
+        const matches = {}
+        // Horizontal check
+        for (let row = 0; row < match3Rows; ++row) {
+            let runType = ""
+            let runStart = 0
+            let runLength = 0
+            for (let column = 0; column < match3Columns; ++column) {
+                const tile = match3TileAt(row, column)
+                const tileType = tile ? tile.typeId : ""
+                if (tileType && tileType === runType) {
+                    runLength += 1
+                } else {
+                    if (runType && runLength >= 3) {
+                        for (let offset = 0; offset < runLength; ++offset)
+                            matches[row + "," + (runStart + offset)] = true
+                    }
+                    runType = tileType
+                    runStart = column
+                    runLength = tileType ? 1 : 0
+                }
+            }
+            if (runType && runLength >= 3) {
+                for (let offset = 0; offset < runLength; ++offset)
+                    matches[row + "," + (runStart + offset)] = true
+            }
+        }
+        // Vertical check
+        for (let column = 0; column < match3Columns; ++column) {
+            let runType = ""
+            let runStart = 0
+            let runLength = 0
+            for (let row = 0; row < match3Rows; ++row) {
+                const tile = match3TileAt(row, column)
+                const tileType = tile ? tile.typeId : ""
+                if (tileType && tileType === runType) {
+                    runLength += 1
+                } else {
+                    if (runType && runLength >= 3) {
+                        for (let offset = 0; offset < runLength; ++offset)
+                            matches[(runStart + offset) + "," + column] = true
+                    }
+                    runType = tileType
+                    runStart = row
+                    runLength = tileType ? 1 : 0
+                }
+            }
+            if (runType && runLength >= 3) {
+                for (let offset = 0; offset < runLength; ++offset)
+                    matches[(runStart + offset) + "," + column] = true
+            }
+        }
+        return Object.keys(matches).map(function(key) {
+            const parts = key.split(",")
+            return { row: parseInt(parts[0]), column: parseInt(parts[1]) }
+        })
+    }
+
+    function clearMatchedTiles(matchList, initiatedByOpponent) {
+        if (!matchList || !matchList.length)
+            return 0
+        let skullCount = 0
+        for (let i = 0; i < matchList.length; ++i) {
+            const entry = matchList[i]
+            const tile = match3TileAt(entry.row, entry.column)
+            if (tile) {
+                if (initiatedByOpponent)
+                    match3OpponentScore += 10
+                else
+                    match3HeroScore += 10
+                if (tile.typeId === "skull")
+                    skullCount += 1
+            }
+            setMatch3Tile(entry.row, entry.column, null)
+        }
+        if (skullCount > 0)
+            applySkullDamage(skullCount, initiatedByOpponent)
+        return matchList.length
+    }
+
+    function collapseMatch3Columns() {
+        for (let column = 0; column < match3Columns; ++column) {
+            let writeRow = match3Rows - 1
+            for (let row = match3Rows - 1; row >= 0; --row) {
+                const tile = match3TileAt(row, column)
+                if (tile) {
+                    if (writeRow !== row) {
+                        setMatch3Tile(writeRow, column, tile)
+                        setMatch3Tile(row, column, null)
+                    }
+                    writeRow -= 1
+                }
+            }
+            while (writeRow >= 0) {
+                const avoid = []
+                if (writeRow <= match3Rows - 3) {
+                    const belowOne = match3TileAt(writeRow + 1, column)
+                    const belowTwo = match3TileAt(writeRow + 2, column)
+                    if (belowOne && belowTwo && belowOne.typeId === belowTwo.typeId)
+                        avoid.push(belowOne.typeId)
+                }
+                const newTile = createRandomMatch3Tile(writeRow, column, avoid)
+                setMatch3Tile(writeRow, column, newTile)
+                writeRow -= 1
+            }
+        }
+    }
+
+    function resolveMatch3Cascade(initialMatches) {
+        if (match3BattleOver)
+            return
+        const matches = initialMatches && initialMatches.length ? initialMatches : findAllMatch3Matches()
+        if (!matches.length) {
+            match3Busy = false
+            if (match3BattleOver)
+                return
+            if (match3OpponentPendingMove && match3OpponentAutoPlay) {
+                match3OpponentPendingMove = false
+                match3CurrentCascadeIsOpponent = false
+                Qt.callLater(function() { autoplayOpponentMove() })
+            } else {
+                match3OpponentPendingMove = false
+                match3CurrentCascadeIsOpponent = false
+                match3StatusMessage = qsTr("Your move! Beware the skulls.")
+            }
+            return
+        }
+        clearMatchedTiles(matches, match3CurrentCascadeIsOpponent)
+        if (match3BattleOver) {
+            match3Busy = false
+            return
+        }
+        collapseMatch3Columns()
+        syncMatch3Model()
+        Qt.callLater(function() {
+            resolveMatch3Cascade(findAllMatch3Matches())
+        })
+    }
+
+    function initializeMatch3Board() {
+        battleBoardReady = false
+        match3Busy = false
+        match3SelectedRow = -1
+        match3SelectedColumn = -1
+        match3Grid = []
+        match3TileModel.clear()
+        if (!match3TileTypes || match3TileTypes.length === 0) {
+            console.warn("⚠️ No tile definitions available for the match-3 board.")
+            return
+        }
+        for (let row = 0; row < match3Rows; ++row) {
+            match3Grid[row] = []
+            for (let column = 0; column < match3Columns; ++column) {
+                const avoidTypes = []
+                if (column >= 2) {
+                    const leftOne = match3TileAt(row, column - 1)
+                    const leftTwo = match3TileAt(row, column - 2)
+                    if (leftOne && leftTwo && leftOne.typeId === leftTwo.typeId)
+                        avoidTypes.push(leftOne.typeId)
+                }
+                if (row >= 2) {
+                    const upOne = match3TileAt(row - 1, column)
+                    const upTwo = match3TileAt(row - 2, column)
+                    if (upOne && upTwo && upOne.typeId === upTwo.typeId)
+                        avoidTypes.push(upOne.typeId)
+                }
+                const tileDefinition = createRandomMatch3Tile(row, column, avoidTypes)
+                setMatch3Tile(row, column, tileDefinition)
+            }
+        }
+        syncMatch3Model()
+        battleBoardReady = true
+    }
+
     function startBattle() {
         if (selectedHeroIndex < 0 || !selectedHeroData) {
             console.log("⚠️ Please select a hero before starting the battle.")
             return
         }
         console.log("🚀 Starting battle with:", selectedHeroData.name, "(", selectedHeroData.heroId, ")")
-        // TODO: load BattleScene.qml when available
+        match3Busy = false
+        match3BattleOver = false
+        match3StatusMessage = qsTr("Your move! Match gems to attack.")
+        match3OpponentPendingMove = false
+        match3CurrentCascadeIsOpponent = false
+        match3HeroScore = 0
+        match3OpponentScore = 0
+        match3HeroMaxHealth = selectedHeroData && selectedHeroData.health !== undefined ? selectedHeroData.health : 100
+        match3HeroHealth = match3HeroMaxHealth
+        match3OpponentHealth = match3OpponentMaxHealth
+        clearMatch3Selection()
+        initializeMatch3Board()
+        if (!battleBoardReady) {
+            console.warn("⚠️ Failed to initialize the match-3 board.")
+            return
+        }
+        inventoryOverlayVisible = false
+        savedHeroesOverlayVisible = false
+        sceneIndex = 7
     }
 
     function showFinaleScene() {
@@ -2019,6 +3062,9 @@ ApplicationWindow {
         lobbyStatusIsError = false
         difficultyIndex = 1
         inventoryOverlayVisible = false
+        savedHeroesOverlayVisible = false
+        savedUsersLoading = false
+        savedUserList = []
         updateHeroDetails()
     }
 

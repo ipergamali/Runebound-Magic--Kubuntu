@@ -14,7 +14,7 @@ items, recipes, metadata/schema, users/{id}/(profile, inventory, equipment).
 import argparse
 import json
 import pathlib
-from typing import Any, Dict
+from typing import Any, Dict, Iterable, Tuple
 
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -44,6 +44,30 @@ def seed_recipes(db: firestore.Client, recipes: Dict[str, Any]) -> None:
 def seed_metadata(db: firestore.Client, metadata: Dict[str, Any]) -> None:
     if metadata:
         db.collection("metadata").document("schema").set(metadata, merge=True)
+
+
+def _iter_tile_entries(tiles: Any) -> Iterable[Tuple[str, Dict[str, Any]]]:
+    if isinstance(tiles, dict):
+        for tile_id, payload in tiles.items():
+            if not isinstance(payload, dict):
+                raise ValueError(f"Tile '{tile_id}' payload must be an object.")
+            yield tile_id, payload
+    elif isinstance(tiles, list):
+        for index, tile in enumerate(tiles):
+            if not isinstance(tile, dict):
+                raise ValueError(f"Tile entry at index {index} must be an object.")
+            tile_id = tile.get("id")
+            if not tile_id:
+                raise ValueError(f"Tile entry at index {index} is missing an 'id' field.")
+            payload = {key: value for key, value in tile.items() if key != "id"}
+            yield tile_id, payload
+    else:
+        raise ValueError("Tiles data must be either an object or a list of objects.")
+
+
+def seed_tiles(db: firestore.Client, tiles: Any) -> None:
+    for tile_id, payload in _iter_tile_entries(tiles):
+        db.collection("tiles").document(tile_id).set(payload)
 
 
 def seed_users(db: firestore.Client, users: Dict[str, Any]) -> None:
@@ -79,6 +103,8 @@ def main() -> None:
         seed_recipes(db, schema["recipes"])
     if "metadata" in schema:
         seed_metadata(db, schema["metadata"])
+    if "tiles" in schema:
+        seed_tiles(db, schema["tiles"])
     if "users" in schema:
         seed_users(db, schema["users"])
 
